@@ -19,6 +19,9 @@ services:
       - DB_NAME=dev
       - DB_USER=postgres
       - DB_PASS=postgres
+    depends_on:
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:13-alpine
@@ -28,6 +31,8 @@ services:
       - POSTGRES_DB=dev
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q",  "-U", "$$POSTGRES_USER", "-d", "$$POSTGRES_DB"]
 
 volumes:
   dev-db-data:
