@@ -14,6 +14,11 @@ class UserManager(BaseUserManager):
         self, email: str, password: Optional[str] = None, **extra_fields
     ):
         """Create, save and return a new user."""
+        if not isinstance(email, str):
+            raise ValueError("email must be string data type.")
+
+        if email == "":
+            raise ValueError("User must have an email address.")
 
         user = self.model(email=self.normalize_email(email), **extra_fields)
         user.set_password(password)
