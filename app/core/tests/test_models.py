@@ -28,3 +28,9 @@ class ModelTests(TestCase):
                 email=email, password="Aa1234567"
             )
             self.assertEqual(user.email, expect_email)
+
+    def test_new_user_without_email_raises_error(self):
+        with self.assertRaises(ValueError):
+            get_user_model().objects.create_user(
+                email="", password="Aa1234567"
+            )
