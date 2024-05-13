@@ -9,6 +9,24 @@ class UserAdmin(BaseUserAdmin):
     ordering = ["id"]
     list_display = ["email", "name"]
 
+    add_fieldsets = (
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": (
+                    "email",
+                    "name",
+                    "password1",
+                    "password2",
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                ),
+            },
+        ),
+    )
+
     fieldsets = (
         (
             None,
