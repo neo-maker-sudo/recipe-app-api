@@ -3,6 +3,7 @@ LABEL maintainer="Neo Chang"
 
 # watch log immediately, not saving into buffer area temporarily
 ENV PYTHONUNBUFFERED 1
+ENV PYTHONPATH="/src"
 
 COPY ./requirements.txt /tmp/requirements.txt
 COPY ./requirements.dev.txt /tmp/requirements.dev.txt
