@@ -58,7 +58,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def to_domain(self) -> domain_model.User:
         methods = domain_model.BaseUserMethods(
-            check_password=self.check_password
+            check_password=self.check_password,
+            refresh_from_db=self.refresh_from_db,
         )
 
         user = domain_model.User(

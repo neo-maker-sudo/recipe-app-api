@@ -21,6 +21,7 @@ class InvalidCredentialsError(Exception):
 @dataclass(frozen=True)
 class BaseUserMethods:
     check_password: Callable
+    refresh_from_db: Callable
 
 
 @dataclass(frozen=True)
