@@ -61,9 +61,11 @@ class User(AbstractBaseUser, PermissionsMixin):
             check_password=self.check_password
         )
 
-        return domain_model.User(
+        user = domain_model.User(
             email=self.email,
             name=self.name,
             password=self.password,
             methods=methods,
         )
+        user.id = self.id
+        return user

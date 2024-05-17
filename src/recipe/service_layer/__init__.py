@@ -1,3 +1,3 @@
-from .services import register
+from .services import register, login
 
-__all__ = ["register"]
+__all__ = ["register", "login"]

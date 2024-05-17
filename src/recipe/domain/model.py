@@ -1,14 +1,32 @@
 from dataclasses import dataclass
 from typing import Optional, Callable
+from rest_framework import status
 
 
 class UserAlreadyExist(Exception):
     message = "使用者已存在"
+    status_code = status.HTTP_400_BAD_REQUEST
+
+
+class UserNotExist(Exception):
+    message = "信箱或密碼錯誤"
+    status_code = status.HTTP_400_BAD_REQUEST
+
+
+class InvalidCredentialsError(Exception):
+    message = "信箱或密碼錯誤"
+    status_code = status.HTTP_400_BAD_REQUEST
 
 
 @dataclass(frozen=True)
 class BaseUserMethods:
     check_password: Callable
+
+
+@dataclass(frozen=True)
+class UserTokenCredentials:
+    access_token: str
+    token_type: str
 
 
 class User:

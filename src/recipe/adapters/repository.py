@@ -19,7 +19,7 @@ class AbstractRepository(ABC):
 class UserRepository(AbstractRepository):
     model = get_user_model()
 
-    def get(self, email: str):
+    def get(self, email: str) -> domain_model.User:
         return self.model.objects.get(email=email).to_domain()
 
     def add(self, user: domain_model.User):
