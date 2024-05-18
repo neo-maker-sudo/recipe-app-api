@@ -47,6 +47,18 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = "email"
 
+    @staticmethod
+    def update_from_domain(user: domain_model.User):
+        u = User.objects.get(id=user.id)
+
+        if user.name is not None:
+            u.name = user.name
+
+        if user.password is not None:
+            u.set_password(user.password)
+
+        u.save()
+
     def add_from_domain(self, user: domain_model.User):
         user = User.objects.create_user(
             email=user.email,
@@ -60,6 +72,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         methods = domain_model.BaseUserMethods(
             check_password=self.check_password,
             refresh_from_db=self.refresh_from_db,
+            set_password=self.set_password,
         )
 
         user = domain_model.User(

@@ -16,7 +16,7 @@ def register(
 
 def login(email: str, password: str, repo: repository.AbstractRepository):
     try:
-        user = repo.get(email=email)
+        user = repo.get({"email": email})
 
     except repo.model.DoesNotExist:
         raise domain_model.UserNotExist
@@ -30,3 +30,28 @@ def login(email: str, password: str, repo: repository.AbstractRepository):
             access_token=str(access_token), token_type="Bearer"
         )
     )
+
+
+def retrieve_user(id: int, repo: repository.AbstractRepository):
+    try:
+        user = repo.get({"id": id})
+
+    except repo.model.DoesNotExist:
+        raise domain_model.UserNotExist
+
+    return user
+
+
+@transaction.atomic
+def update_user(
+    id: int, update_fields: dict, repo: repository.AbstractRepository
+) -> None:
+    try:
+        user = repo.get({"id": id})
+
+        domain_model.manage_profile(user, update_fields)
+
+        repo.update(user)
+
+    except repo.model.DoesNotExist:
+        raise domain_model.UserNotExist

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Union
 from recipe.domain import model as domain_model
 
 from django.db import IntegrityError
@@ -15,12 +16,16 @@ class AbstractRepository(ABC):
     def add(self):
         raise NotImplementedError
 
+    @abstractmethod
+    def update(self):
+        raise NotImplementedError
+
 
 class UserRepository(AbstractRepository):
     model = get_user_model()
 
-    def get(self, email: str) -> domain_model.User:
-        return self.model.objects.get(email=email).to_domain()
+    def get(self, field: dict[str, Union[str, int]]) -> domain_model.User:
+        return self.model.objects.get(**field).to_domain()
 
     def add(self, user: domain_model.User):
         try:
@@ -28,3 +33,6 @@ class UserRepository(AbstractRepository):
 
         except IntegrityError:
             raise domain_model.UserAlreadyExist
+
+    def update(self, user: domain_model.User):
+        self.model.update_from_domain(user)

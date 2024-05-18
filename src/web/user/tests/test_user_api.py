@@ -17,10 +17,7 @@ def create_user(
     email: str, name: str, password: str, repo: repository.UserRepository
 ):
     user = domain_model.User(email=email, name=name, password=password)
-
-    repo.add(user)
-
-    return user
+    return repo.add(user)
 
 
 class PublicUserApiTests(TestCase):
@@ -46,7 +43,7 @@ class PublicUserApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertNotIn("password", res.data)
 
-        user_dto = self.repo.get(user.email)
+        user_dto = self.repo.get({"email": user.email})
         self.assertTrue(user_dto.check_password(user.password))
 
     def test_create_user_exist_error(self):
@@ -77,7 +74,7 @@ class PublicUserApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
         with self.assertRaises(self.repo.model.DoesNotExist):
-            self.repo.get(email=user.email)
+            self.repo.get({"email": user.email})
 
     def test_create_token_for_user(self):
         user = create_user(
@@ -87,7 +84,7 @@ class PublicUserApiTests(TestCase):
             repo=self.repo,
         )
 
-        payload = dict(email=user.email, password=user.password)
+        payload = dict(email=user.email, password=self.password)
         res = self.client.post(TOKEN_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -147,21 +144,32 @@ class PrivateUserApiTests(TestCase):
             repo=self.repo,
         )
 
-        self.client.force_authenticate(user=self.user)
+        self.login()
+        self.headers = {
+            "HTTP_AUTHORIZATION": f"{self.token_type} {self.access_token}"
+        }
+
+    def login(self):
+        payload = dict(email=self.email, password=self.password)
+        res = self.client.post(TOKEN_URL, payload)
+
+        self.access_token = res.data["access_token"]
+        self.token_type = res.data["token_type"]
 
     def test_retrieve_profile_success(self):
-        res = self.client.get(ME_URL)
+        res = self.client.get(ME_URL, **self.headers)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(
             res.data,
             {
+                "id": self.user.id,
                 "email": self.email,
                 "name": self.name,
             },
         )
 
     def test_post_me_not_allowed(self):
-        res = self.client.post(ME_URL, {})
+        res = self.client.post(ME_URL, {}, **self.headers)
         self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_update_user_profile(self):
@@ -171,9 +179,11 @@ class PrivateUserApiTests(TestCase):
                 "name": self.update_name,
                 "password": self.update_password,
             },
+            **self.headers,
         )
 
         self.user.refresh_from_db()
+
         self.assertEqual(self.user.name, self.update_name)
         self.assertTrue(self.user.check_password(self.update_password))
         self.assertEqual(res.status_code, status.HTTP_200_OK)

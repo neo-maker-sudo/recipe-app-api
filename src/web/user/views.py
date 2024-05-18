@@ -8,6 +8,9 @@ from .serializers import (
     UserSerializerOut,
     LoginSerializerIn,
     LoginSerializerOut,
+    ManageUserGetSerializerIn,
+    ManageUserGetSerializerOut,
+    ManageUserPatchSerializerIn,
 )
 from recipe import service_layer as services
 from recipe.adapters import repository
@@ -74,3 +77,58 @@ class LoginAPIView(APIView):
             credentials,
             status=status.HTTP_200_OK,
         )
+
+
+class ManageUserAPIView(APIView):
+
+    @extend_schema(
+        request=ManageUserGetSerializerIn,
+        responses={
+            200: ManageUserGetSerializerOut,
+            401: ManageUserGetSerializerIn.invalid_token_msg,
+        },
+        methods=["GET"],
+    )
+    def get(self, request, *args, **kwargs):
+        serializer = ManageUserGetSerializerIn(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            user = services.retrieve_user(
+                id=serializer.validated_data.get("user_id"),
+                repo=repository.UserRepository(),
+            )
+
+        except domain_model.UserNotExist as exc:
+            return Response({"detail": exc.message}, status=exc.status_code)
+
+        return Response(
+            ManageUserGetSerializerOut(user).data, status=status.HTTP_200_OK
+        )
+
+    @extend_schema(
+        request=ManageUserPatchSerializerIn,
+        responses={
+            200: "OK",
+            401: ManageUserPatchSerializerIn.invalid_token_msg,
+        },
+        methods=["PATCH"],
+    )
+    def patch(self, request, *args, **kwargs):
+        serializer = ManageUserPatchSerializerIn(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        services.update_user(
+            id=serializer.validated_data.get("user_id"),
+            update_fields={
+                "name": serializer.validated_data.get("name"),
+                "password": serializer.validated_data.get("password"),
+            },
+            repo=repository.UserRepository(),
+        )
+
+        return Response("OK", status=status.HTTP_200_OK)

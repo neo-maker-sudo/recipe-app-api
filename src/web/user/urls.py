@@ -8,4 +8,5 @@ app_name = "user"
 urlpatterns = [
     path("register/", views.RegisterAPIView.as_view(), name="create"),
     path("login/", views.LoginAPIView.as_view(), name="token"),
+    path("me/", views.ManageUserAPIView.as_view(), name="me"),
 ]

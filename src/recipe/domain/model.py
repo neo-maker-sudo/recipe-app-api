@@ -3,6 +3,11 @@ from typing import Optional, Callable
 from rest_framework import status
 
 
+def manage_profile(user, update_fields):
+    user.manage_profile(update_fields)
+    return update_fields
+
+
 class UserAlreadyExist(Exception):
     message = "使用者已存在"
     status_code = status.HTTP_400_BAD_REQUEST
@@ -22,6 +27,7 @@ class InvalidCredentialsError(Exception):
 class BaseUserMethods:
     check_password: Callable
     refresh_from_db: Callable
+    set_password: Callable
 
 
 @dataclass(frozen=True)
@@ -58,3 +64,10 @@ class User:
 
     def check_password(self, raw_password) -> bool:
         return self.methods.check_password(raw_password)
+
+    def manage_profile(self, update_fields):
+        if (name := update_fields.get("name", None)) is not None:
+            self.name = name
+
+        if (password := update_fields.get("password", None)) is not None:
+            self.password = password
