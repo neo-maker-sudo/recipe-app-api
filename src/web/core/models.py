@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import (
@@ -70,7 +70,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         return user
 
-    def to_domain(self) -> domain_model.User:
+    def to_domain(
+        self,
+        using_relate: bool = False,
+        order_by: Optional[Union[str, list[str]]] = None,
+    ) -> domain_model.User:
         methods = domain_model.BaseUserMethods(
             check_password=self.check_password,
             refresh_from_db=self.refresh_from_db,
@@ -84,6 +88,13 @@ class User(AbstractBaseUser, PermissionsMixin):
             methods=methods,
         )
         user.id = self.id
+
+        if using_relate:
+            user._recipes = set(
+                recipe.to_domain()
+                for recipe in self.recipes.all().order_by(order_by)
+            )
+
         return user
 
 
@@ -97,7 +108,20 @@ class Recipe(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
+        related_name="recipes",
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.title
+
+    def to_domain(self) -> domain_model.Recipe:
+        recipe = domain_model.Recipe(
+            title=self.title,
+            description=self.description,
+            time_minutes=self.time_minutes,
+            price=self.price,
+            link=self.link,
+        )
+
+        recipe.id = self.id
+        return recipe

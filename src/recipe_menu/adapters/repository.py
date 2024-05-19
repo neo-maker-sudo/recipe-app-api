@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Union, Optional
 from recipe_menu.domain import model as domain_model
 
 from django.db import IntegrityError
@@ -24,8 +24,20 @@ class AbstractRepository(ABC):
 class UserRepository(AbstractRepository):
     model = get_user_model()
 
-    def get(self, field: dict[str, Union[str, int]]) -> domain_model.User:
-        return self.model.objects.get(**field).to_domain()
+    def get(
+        self,
+        field: dict[str, Union[str, int]],
+        order_by: Optional[Union[str, list[str]]] = None,
+        prefetch_model: Optional[str] = None,
+    ) -> domain_model.User:
+        if prefetch_model is None:
+            return self.model.objects.get(**field).to_domain()
+
+        return (
+            self.model.objects.prefetch_related(prefetch_model)
+            .get(**field)
+            .to_domain(using_relate=True, order_by=order_by)
+        )
 
     def add(self, user: domain_model.User):
         try:

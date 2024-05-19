@@ -55,3 +55,17 @@ def update_user(
 
     except repo.model.DoesNotExist:
         raise domain_model.UserNotExist
+
+
+def retrieve_recipes(
+    user_id: int, order_by: str, repo: repository.AbstractRepository
+) -> set:
+    try:
+        user: domain_model.User = repo.get(
+            {"id": user_id}, order_by=order_by, prefetch_model="recipes"
+        )
+
+    except repo.model.DoesNotExist:
+        raise domain_model.UserNotExist
+
+    return user.recipes

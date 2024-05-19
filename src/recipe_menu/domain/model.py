@@ -49,6 +49,7 @@ class User:
         self.password = password
         # add extra_methods attribute for using django original User model method
         self.methods = methods
+        self._recipes = set()
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, User):
@@ -71,3 +72,25 @@ class User:
 
         if (password := update_fields.get("password", None)) is not None:
             self.password = password
+
+    @property
+    def recipes(self):
+        return self._recipes
+
+
+class Recipe:
+
+    def __init__(
+        self,
+        title: str,
+        description: str,
+        time_minutes: int,
+        price: float,
+        link: str,
+    ):
+        self.id = None
+        self.title = title
+        self.description = description
+        self.time_minutes = time_minutes
+        self.price = price
+        self.link = link
