@@ -1,10 +1,12 @@
 from typing import Optional
-from django.db import models  # noqa
+from django.conf import settings
+from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
     PermissionsMixin,
 )
+
 from recipe.domain import model as domain_model
 
 
@@ -83,3 +85,19 @@ class User(AbstractBaseUser, PermissionsMixin):
         )
         user.id = self.id
         return user
+
+
+class Recipe(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    time_minutes = models.IntegerField()
+    price = models.DecimalField(max_digits=5, decimal_places=2)
+    link = models.CharField(max_length=255, blank=True)
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+
+    def __str__(self):
+        return self.title
