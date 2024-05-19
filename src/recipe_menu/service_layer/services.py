@@ -2,8 +2,8 @@ import dataclasses
 from django.db import transaction
 from rest_framework_simplejwt.tokens import AccessToken
 
-from recipe.adapters import repository
-from recipe.domain import model as domain_model
+from recipe_menu.adapters import repository
+from recipe_menu.domain import model as domain_model
 
 
 @transaction.atomic

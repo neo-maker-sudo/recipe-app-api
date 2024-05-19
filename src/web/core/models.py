@@ -7,7 +7,7 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 
-from recipe.domain import model as domain_model
+from recipe_menu.domain import model as domain_model
 
 
 class UserManager(BaseUserManager):

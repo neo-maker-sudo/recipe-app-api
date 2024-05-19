@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Union
-from recipe.domain import model as domain_model
+from recipe_menu.domain import model as domain_model
 
 from django.db import IntegrityError
 from django.contrib.auth import get_user_model
