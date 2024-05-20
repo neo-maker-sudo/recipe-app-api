@@ -90,10 +90,9 @@ class PrivateRecipeAPITests(TestCase):
             for recipe in Recipe.objects.all().order_by(order_by)
         ]
 
+        data = RecipeListSerializerOut(recipes, many=True).data
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            res.data, RecipeListSerializerOut(recipes, many=True).data
-        )
+        self.assertEqual(res.data, data)
 
     def test_recipe_list_limited_to_user(self):
         order_by = "-id"

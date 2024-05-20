@@ -10,7 +10,6 @@ from rest_framework_simplejwt.authentication import (
 from recipe_menu import service_layer as services
 from recipe_menu.adapters import repository
 from recipe.serializers import (
-    RecipeListSerializerIn,
     RecipeListSerializerOut,
     RecipeDetailSerializerOut,
 )
@@ -18,25 +17,22 @@ from recipe_menu.domain import model as domain_model
 
 
 class RecipeListAPIView(APIView):
+    authentication_classes = [JWTStatelessUserAuthentication]
+    permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        request=RecipeListSerializerIn,
+        request="",
         responses={
             200: RecipeListSerializerOut,
-            401: RecipeListSerializerIn.invalid_token_msg,
+            401: "",
         },
         methods=["GET"],
     )
     def get(self, request, *args, **kwargs):
         order_by = request.query_params.get("o", "-id")
 
-        serializer = RecipeListSerializerIn(
-            data=request.data, context={"request": request}
-        )
-        serializer.is_valid(raise_exception=True)
-
         recipes = services.retrieve_recipes(
-            user_id=serializer.validated_data.get("user_id"),
+            user_id=request.user.id,
             order_by=order_by,
             repo=repository.UserRepository(),
         )
