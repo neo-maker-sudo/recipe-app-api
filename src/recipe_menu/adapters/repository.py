@@ -3,6 +3,7 @@ from typing import Union, Optional
 from recipe_menu.domain import model as domain_model
 
 from django.db import IntegrityError
+from django.apps import apps as django_apps
 from django.contrib.auth import get_user_model
 
 
@@ -48,3 +49,16 @@ class UserRepository(AbstractRepository):
 
     def update(self, user: domain_model.User):
         self.model.update_from_domain(user)
+
+
+class RecipeRepository(AbstractRepository):
+    model = django_apps.get_model("core.Recipe")
+
+    def get(self, field: dict[str, int]):
+        return self.model.objects.get(**field).to_domain()
+
+    def add(self):
+        pass
+
+    def update(self):
+        pass

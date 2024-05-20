@@ -78,6 +78,11 @@ class User:
         return self._recipes
 
 
+class RecipeNotExist(Exception):
+    message = "食譜不存在"
+    status_code = status.HTTP_400_BAD_REQUEST
+
+
 class Recipe:
 
     def __init__(

@@ -69,3 +69,16 @@ def retrieve_recipes(
         raise domain_model.UserNotExist
 
     return user.recipes
+
+
+def retrieve_recipe(
+    id: int, repo: repository.AbstractRepository
+) -> domain_model.Recipe:
+
+    try:
+        recipe: domain_model.Recipe = repo.get({"id": id})
+
+    except repo.model.DoesNotExist:
+        raise domain_model.RecipeNotExist
+
+    return recipe
