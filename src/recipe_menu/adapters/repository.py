@@ -54,11 +54,11 @@ class UserRepository(AbstractRepository):
 class RecipeRepository(AbstractRepository):
     model = django_apps.get_model("core.Recipe")
 
-    def get(self, field: dict[str, int]):
+    def get(self, field: dict[str, int]) -> domain_model.Recipe:
         return self.model.objects.get(**field).to_domain()
 
-    def add(self):
-        pass
+    def add(self, recipe: domain_model.Recipe):
+        return self.model().add_from_domain(recipe)
 
     def update(self):
         pass

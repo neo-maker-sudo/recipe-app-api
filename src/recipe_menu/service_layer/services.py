@@ -82,3 +82,27 @@ def retrieve_recipe(
         raise domain_model.RecipeNotExist
 
     return recipe
+
+
+def create_recipe(
+    title: str,
+    time_minutes: int,
+    price: float,
+    user_id: int,
+    repo: repository.AbstractRepository,
+) -> None:
+    try:
+        user = repository.UserRepository.model.objects.get(id=user_id)
+
+    except repository.UserRepository.model.DoesNotExist:
+        raise domain_model.UserNotExist
+
+    recipe = domain_model.Recipe(
+        title=title,
+        description="",
+        price=price,
+        time_minutes=time_minutes,
+        link="",
+    )
+    recipe.mark_user(user)
+    repo.add(recipe)

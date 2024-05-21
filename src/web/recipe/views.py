@@ -12,6 +12,8 @@ from recipe_menu.adapters import repository
 from recipe.serializers import (
     RecipeListSerializerOut,
     RecipeDetailSerializerOut,
+    RecipeCreateSerializerIn,
+    RecipeCreateSerializerOut,
 )
 from recipe_menu.domain import model as domain_model
 
@@ -40,6 +42,31 @@ class RecipeListAPIView(APIView):
         return Response(
             RecipeListSerializerOut(recipes, many=True).data,
             status=status.HTTP_200_OK,
+        )
+
+    @extend_schema(
+        request=RecipeCreateSerializerIn,
+        responses={
+            201: RecipeCreateSerializerOut,
+            401: "",
+        },
+        methods=["POST"],
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = RecipeCreateSerializerIn(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        services.create_recipe(
+            title=serializer.validated_data.get("title"),
+            time_minutes=serializer.validated_data.get("time_minutes"),
+            price=serializer.validated_data.get("price"),
+            user_id=request.user.id,
+            repo=repository.RecipeRepository(),
+        )
+
+        return Response(
+            "OK",
+            status=status.HTTP_201_CREATED,
         )
 
 

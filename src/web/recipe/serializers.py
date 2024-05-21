@@ -11,3 +11,17 @@ class RecipeListSerializerOut(serializers.Serializer):
 
 class RecipeDetailSerializerOut(RecipeListSerializerOut):
     description = serializers.CharField()
+
+
+class RecipeCreateSerializerIn(serializers.Serializer):
+    title = serializers.CharField()
+    time_minutes = serializers.IntegerField()
+    price = serializers.DecimalField(max_digits=5, decimal_places=2)
+
+
+class RecipeCreateSerializerOut(serializers.Serializer):
+    title = serializers.CharField()
+    time_minutes = serializers.IntegerField()
+    price = serializers.DecimalField(max_digits=5, decimal_places=2)
+    description = serializers.CharField()
+    link = serializers.CharField()

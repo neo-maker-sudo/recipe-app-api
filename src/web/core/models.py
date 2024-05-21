@@ -50,7 +50,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "email"
 
     @staticmethod
-    def update_from_domain(user: domain_model.User):
+    def update_from_domain(user: domain_model.User) -> None:
         u = User.objects.get(id=user.id)
 
         if user.name is not None:
@@ -124,4 +124,16 @@ class Recipe(models.Model):
         )
 
         recipe.id = self.id
+        return recipe
+
+    def add_from_domain(self, recipe: domain_model.Recipe):
+        recipe = Recipe.objects.create(
+            title=recipe.title,
+            description=recipe.description,
+            time_minutes=recipe.time_minutes,
+            price=recipe.price,
+            link=recipe.link,
+            user=recipe.user,
+        )
+
         return recipe

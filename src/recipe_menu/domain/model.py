@@ -99,3 +99,7 @@ class Recipe:
         self.time_minutes = time_minutes
         self.price = price
         self.link = link
+        self.user = None
+
+    def mark_user(self, user) -> None:
+        self.user = user

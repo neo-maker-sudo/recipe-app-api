@@ -5,6 +5,7 @@ from .services import (
     update_user,
     retrieve_recipes,
     retrieve_recipe,
+    create_recipe,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "update_user",
     "retrieve_recipes",
     "retrieve_recipe",
+    "create_recipe",
 ]
