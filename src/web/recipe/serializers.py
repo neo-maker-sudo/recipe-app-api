@@ -17,6 +17,8 @@ class RecipeCreateSerializerIn(serializers.Serializer):
     title = serializers.CharField()
     time_minutes = serializers.IntegerField()
     price = serializers.DecimalField(max_digits=5, decimal_places=2)
+    description = serializers.CharField(allow_blank=True)
+    link = serializers.CharField(allow_blank=True)
 
 
 class RecipeCreateSerializerOut(serializers.Serializer):

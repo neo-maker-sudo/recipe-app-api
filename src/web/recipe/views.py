@@ -60,6 +60,8 @@ class RecipeListAPIView(APIView):
             title=serializer.validated_data.get("title"),
             time_minutes=serializer.validated_data.get("time_minutes"),
             price=serializer.validated_data.get("price"),
+            description=serializer.validated_data.get("description"),
+            link=serializer.validated_data.get("link"),
             user_id=request.user.id,
             repo=repository.RecipeRepository(),
         )
@@ -98,3 +100,11 @@ class RecipeDetailAPIView(APIView):
             RecipeDetailSerializerOut(recipe).data,
             status=status.HTTP_200_OK,
         )
+
+    @extend_schema()
+    def patch(self, request, *args, **kwargs):
+        pass
+
+    @extend_schema()
+    def delete(self, request, *args, **kwargs):
+        pass

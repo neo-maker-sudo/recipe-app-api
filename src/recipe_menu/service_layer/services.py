@@ -88,6 +88,8 @@ def create_recipe(
     title: str,
     time_minutes: int,
     price: float,
+    description: str,
+    link: str,
     user_id: int,
     repo: repository.AbstractRepository,
 ) -> None:
@@ -99,10 +101,10 @@ def create_recipe(
 
     recipe = domain_model.Recipe(
         title=title,
-        description="",
+        description=description,
         price=price,
         time_minutes=time_minutes,
-        link="",
+        link=link,
     )
     recipe.mark_user(user)
     repo.add(recipe)

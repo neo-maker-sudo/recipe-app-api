@@ -128,6 +128,8 @@ class PrivateRecipeAPITests(TestCase):
             "title": "Sample Recipe",
             "time_minutes": 10,
             "price": Decimal("1.99"),
+            "description": "",
+            "link": "",
         }
 
         res = self.client.post(RECIPES_URL, payload, **self.headers)
