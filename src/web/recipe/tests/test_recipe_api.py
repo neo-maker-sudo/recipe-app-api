@@ -13,6 +13,7 @@ from recipe.serializers import (
     RecipeListSerializerOut,
     RecipeDetailSerializerOut,
 )
+from recipe_menu.adapters import repository
 
 RECIPES_URL = reverse("recipe:recipe-list")
 TOKEN_URL = reverse("user:token")
@@ -68,6 +69,8 @@ class PrivateRecipeAPITests(TestCase):
             "HTTP_AUTHORIZATION": f"{self.token_type} {self.access_token}"
         }
 
+        self.repo = repository.RecipeRepository()
+
     def login(self):
         payload = dict(email=self.email, password=self.password)
         res = self.client.post(TOKEN_URL, payload)
@@ -119,3 +122,15 @@ class PrivateRecipeAPITests(TestCase):
 
         self.assertEqual(res.data, RecipeDetailSerializerOut(recipe).data)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_create_recipe(self):
+        payload = {
+            "title": "Sample Recipe",
+            "time_minutes": 10,
+            "price": Decimal("1.99"),
+        }
+
+        res = self.client.post(RECIPES_URL, payload, **self.headers)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data, "OK")
