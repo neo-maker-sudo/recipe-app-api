@@ -108,3 +108,21 @@ def create_recipe(
     )
     recipe.mark_user(user)
     repo.add(recipe)
+
+
+def update_recipe(
+    id: int,
+    update_fields: dict,
+    user_id: int,
+    repo: repository.AbstractRepository,
+) -> domain_model.Recipe:
+    recipe: domain_model.Recipe = repo.get({"id": id}, select_related="user")
+
+    if not recipe.check_ownership(user_id):
+        raise domain_model.RecipeNotOwnerError
+
+    recipe.update_detail(update_fields)
+
+    repo.update(recipe)
+
+    return recipe

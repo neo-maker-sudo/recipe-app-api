@@ -14,6 +14,7 @@ from recipe.serializers import (
     RecipeDetailSerializerOut,
     RecipeCreateSerializerIn,
     RecipeCreateSerializerOut,
+    RecipeDetailPatchSerializerIn,
 )
 from recipe_menu.domain import model as domain_model
 
@@ -101,9 +102,50 @@ class RecipeDetailAPIView(APIView):
             status=status.HTTP_200_OK,
         )
 
-    @extend_schema()
+    @extend_schema(
+        request=RecipeDetailPatchSerializerIn,
+        responses={
+            200: RecipeDetailSerializerOut,
+            400: domain_model.RecipeNotExist,
+            401: "",
+            404: domain_model.RecipeNotOwnerError,
+        },
+        methods=["PATCH"],
+    )
     def patch(self, request, *args, **kwargs):
-        pass
+        id = kwargs.get("recipe_id", None)
+
+        serializer = RecipeDetailPatchSerializerIn(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            recipe = services.update_recipe(
+                id=id,
+                update_fields={
+                    "title": serializer.validated_data.get("title"),
+                    "time_minutes": serializer.validated_data.get(
+                        "time_minutes"
+                    ),
+                    "price": serializer.validated_data.get("price"),
+                    "description": serializer.validated_data.get(
+                        "description"
+                    ),
+                    "link": serializer.validated_data.get("link"),
+                },
+                user_id=request.user.id,
+                repo=repository.RecipeRepository(),
+            )
+
+        except (
+            domain_model.RecipeNotExist,
+            domain_model.RecipeNotOwnerError,
+        ) as exc:
+            return Response({"detail": exc.message}, status=exc.status_code)
+
+        return Response(
+            RecipeDetailSerializerOut(recipe).data,
+            status=status.HTTP_200_OK,
+        )
 
     @extend_schema()
     def delete(self, request, *args, **kwargs):

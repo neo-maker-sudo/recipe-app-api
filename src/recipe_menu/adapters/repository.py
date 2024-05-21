@@ -53,12 +53,25 @@ class UserRepository(AbstractRepository):
 
 class RecipeRepository(AbstractRepository):
     model = django_apps.get_model("core.Recipe")
+    instance = None
 
-    def get(self, field: dict[str, int]) -> domain_model.Recipe:
-        return self.model.objects.get(**field).to_domain()
+    def get(
+        self, field: dict[str, int], select_related: Optional[str] = None
+    ) -> domain_model.Recipe:
+        if select_related is not None:
+            self.instance = self.model.objects.select_related("user").get(
+                **field
+            )
+
+        else:
+            self.instance = self.model.objects.get(**field)
+
+        return self.instance.to_domain()
 
     def add(self, recipe: domain_model.Recipe):
-        return self.model().add_from_domain(recipe)
+        self.instance = self.model().add_from_domain(recipe)
+        return self.instance
 
-    def update(self):
-        pass
+    def update(self, recipe: domain_model.Recipe):
+        if self.instance is not None:
+            self.instance.update_from_domain(recipe)

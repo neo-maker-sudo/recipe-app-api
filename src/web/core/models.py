@@ -114,6 +114,14 @@ class Recipe(models.Model):
     def __str__(self) -> str:
         return self.title
 
+    def update_from_domain(self, recipe: domain_model.Recipe) -> None:
+        self.title = recipe.title
+        self.description = recipe.description
+        self.time_minutes = recipe.time_minutes
+        self.price = recipe.price
+        self.link = recipe.link
+        self.save()
+
     def to_domain(self) -> domain_model.Recipe:
         recipe = domain_model.Recipe(
             title=self.title,
@@ -124,6 +132,8 @@ class Recipe(models.Model):
         )
 
         recipe.id = self.id
+        recipe.user = self.user
+
         return recipe
 
     def add_from_domain(self, recipe: domain_model.Recipe):

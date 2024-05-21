@@ -27,3 +27,13 @@ class RecipeCreateSerializerOut(serializers.Serializer):
     price = serializers.DecimalField(max_digits=5, decimal_places=2)
     description = serializers.CharField()
     link = serializers.CharField()
+
+
+class RecipeDetailPatchSerializerIn(serializers.Serializer):
+    title = serializers.CharField(required=False)
+    time_minutes = serializers.IntegerField(required=False)
+    price = serializers.DecimalField(
+        max_digits=5, decimal_places=2, required=False
+    )
+    description = serializers.CharField(allow_blank=True, required=False)
+    link = serializers.CharField(allow_blank=True, required=False)
