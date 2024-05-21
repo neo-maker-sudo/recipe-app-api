@@ -162,3 +162,22 @@ class PrivateRecipeAPITests(TestCase):
         res = self.client.patch(url, payload, **self.headers)
 
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_recipe(self):
+        recipe = create_recipe(self.user)
+
+        url = detail_url(recipe.id)
+        res = self.client.delete(url, **self.headers)
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+
+        with self.assertRaises(Recipe.DoesNotExist):
+            Recipe.objects.get(id=recipe.id)
+
+    def test_delete_other_users_recipe_errors(self):
+        recipe = create_recipe(self.other_user)
+
+        url = detail_url(recipe.id)
+        res = self.client.delete(url, **self.headers)
+
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
