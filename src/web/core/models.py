@@ -90,10 +90,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         user.id = self.id
 
         if using_relate:
-            user._recipes = set(
+            user._recipes = [
                 recipe.to_domain()
                 for recipe in self.recipes.all().order_by(order_by)
-            )
+            ]
 
         return user
 
