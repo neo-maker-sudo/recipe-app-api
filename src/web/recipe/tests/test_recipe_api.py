@@ -136,3 +136,29 @@ class PrivateRecipeAPITests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(res.data, "OK")
+
+    def test_partial_update(self):
+        link = "https://www.example.com/recipe.pdf"
+
+        recipe = create_recipe(self.user, link=link)
+
+        url = detail_url(recipe.id)
+        payload = {"title": "123"}
+        res = self.client.patch(url, payload, **self.headers)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        recipe.refresh_from_db()
+        self.assertEqual(recipe.title, payload["title"])
+        self.assertEqual(recipe.link, link)
+        self.assertEqual(recipe.user, self.user)
+
+    def test_update_user_return_errors(self):
+        recipe = create_recipe(self.other_user)
+
+        url = detail_url(recipe.id)
+        payload = {"title": "123"}
+
+        res = self.client.patch(url, payload, **self.headers)
+
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
