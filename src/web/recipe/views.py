@@ -147,6 +147,30 @@ class RecipeDetailAPIView(APIView):
             status=status.HTTP_200_OK,
         )
 
-    @extend_schema()
+    @extend_schema(
+        request="",
+        responses={
+            204: RecipeDetailSerializerOut,
+            400: domain_model.RecipeNotExist,
+            401: "",
+            404: domain_model.RecipeNotOwnerError,
+        },
+        methods=["PATCH"],
+    )
     def delete(self, request, *args, **kwargs):
-        pass
+        id = kwargs.get("recipe_id", None)
+
+        try:
+            services.delete_recipe(
+                id=id,
+                user_id=request.user.id,
+                repo=repository.RecipeRepository(),
+            )
+
+        except (
+            domain_model.RecipeNotExist,
+            domain_model.RecipeNotOwnerError,
+        ) as exc:
+            return Response({"detail": exc.message}, status=exc.status_code)
+
+        return Response("OK", status=status.HTTP_204_NO_CONTENT)

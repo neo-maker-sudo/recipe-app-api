@@ -7,6 +7,7 @@ from .services import (
     retrieve_recipe,
     create_recipe,
     update_recipe,
+    delete_recipe,
 )
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "retrieve_recipe",
     "create_recipe",
     "update_recipe",
+    "delete_recipe",
 ]

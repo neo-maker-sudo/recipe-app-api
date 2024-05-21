@@ -110,6 +110,7 @@ def create_recipe(
     repo.add(recipe)
 
 
+@transaction.atomic
 def update_recipe(
     id: int,
     update_fields: dict,
@@ -126,3 +127,18 @@ def update_recipe(
     repo.update(recipe)
 
     return recipe
+
+
+@transaction.atomic
+def delete_recipe(
+    id: int,
+    user_id: int,
+    repo: repository.AbstractRepository,
+) -> None:
+    recipe: domain_model.Recipe = repo.get({"id": id}, select_related="user")
+
+    if not recipe.check_ownership(user_id):
+        raise domain_model.RecipeNotOwnerError
+
+    del recipe
+    repo.delete()

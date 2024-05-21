@@ -75,3 +75,7 @@ class RecipeRepository(AbstractRepository):
     def update(self, recipe: domain_model.Recipe):
         if self.instance is not None:
             self.instance.update_from_domain(recipe)
+
+    def delete(self):
+        if self.instance is not None:
+            self.instance.delete()
