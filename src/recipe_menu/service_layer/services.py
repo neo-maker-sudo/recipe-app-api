@@ -185,3 +185,22 @@ def update_tag(
     repo.update(tag)
 
     return tag
+
+
+@transaction.atomic
+def delete_tag(
+    id: int,
+    user_id: int,
+    repo: repository.AbstractRepository,
+) -> None:
+    try:
+        tag: domain_model.Tag = repo.get({"id": id}, select_related="user")
+
+    except repo.model.DoesNotExist:
+        raise domain_model.TagNotExist
+
+    if not tag.check_ownership(user_id):
+        raise domain_model.TagNotOwnerError
+
+    del tag
+    repo.delete()

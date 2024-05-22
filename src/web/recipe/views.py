@@ -243,3 +243,31 @@ class TagDetailAPIView(APIView):
             TagDetailPatchSerializerOut(tag).data,
             status=status.HTTP_200_OK,
         )
+
+    @extend_schema(
+        request="",
+        responses={
+            204: "OK",
+            400: domain_model.TagNotExist,
+            401: "",
+            404: domain_model.TagNotOwnerError,
+        },
+        methods=["DELETE"],
+    )
+    def delete(self, request, *args, **kwargs):
+        id = kwargs.get("tag_id", None)
+
+        try:
+            services.delete_tag(
+                id=id,
+                user_id=request.user.id,
+                repo=repository.TagRepository(),
+            )
+
+        except (
+            domain_model.TagNotExist,
+            domain_model.TagNotOwnerError,
+        ) as exc:
+            return Response({"detail": exc.message}, status=exc.status_code)
+
+        return Response("OK", status=status.HTTP_204_NO_CONTENT)

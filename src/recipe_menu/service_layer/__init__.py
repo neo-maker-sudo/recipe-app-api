@@ -10,6 +10,7 @@ from .services import (
     delete_recipe,
     retrieve_tags,
     update_tag,
+    delete_tag,
 )
 
 __all__ = [
@@ -24,4 +25,5 @@ __all__ = [
     "delete_recipe",
     "retrieve_tags",
     "update_tag",
+    "delete_tag",
 ]

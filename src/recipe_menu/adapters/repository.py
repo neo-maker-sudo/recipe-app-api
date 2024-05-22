@@ -76,11 +76,11 @@ class RecipeRepository(AbstractRepository):
         self.instance = self.model().add_from_domain(recipe)
         return self.instance
 
-    def update(self, recipe: domain_model.Recipe):
+    def update(self, recipe: domain_model.Recipe) -> None:
         if self.instance is not None:
             self.instance.update_from_domain(recipe)
 
-    def delete(self):
+    def delete(self) -> None:
         if self.instance is not None:
             self.instance.delete()
 
@@ -91,7 +91,7 @@ class TagRepository(AbstractRepository):
 
     def get(
         self, field: dict[str, int], select_related: Optional[str] = None
-    ) -> domain_model.Recipe:
+    ) -> domain_model.Tag:
         if select_related is not None:
             self.instance = self.model.objects.select_related(
                 select_related
@@ -105,6 +105,10 @@ class TagRepository(AbstractRepository):
     def add(self):
         pass
 
-    def update(self, tag: domain_model.Tag):
+    def update(self, tag: domain_model.Tag) -> None:
         if self.instance is not None:
             self.instance.update_from_domain(tag)
+
+    def delete(self) -> None:
+        if self.instance is not None:
+            self.instance.delete()
