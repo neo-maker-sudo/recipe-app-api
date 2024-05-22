@@ -4,8 +4,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from recipe.domain import model as domain_model
-from recipe.adapters import repository
+from recipe_menu.domain import model as domain_model
+from recipe_menu.adapters import repository
 
 
 CREATE_USER_URL = reverse("user:create")

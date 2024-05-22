@@ -12,9 +12,9 @@ from .serializers import (
     ManageUserGetSerializerOut,
     ManageUserPatchSerializerIn,
 )
-from recipe import service_layer as services
-from recipe.adapters import repository
-from recipe.domain import model as domain_model
+from recipe_menu import service_layer as services
+from recipe_menu.adapters import repository
+from recipe_menu.domain import model as domain_model
 
 
 class RegisterAPIView(APIView):
