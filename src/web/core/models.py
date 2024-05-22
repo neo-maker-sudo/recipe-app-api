@@ -168,6 +168,10 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
+    def update_from_domain(self, tag: domain_model.Tag) -> None:
+        self.name = tag.name
+        self.save()
+
     def to_domain(self) -> domain_model.Tag:
         tag = domain_model.Tag(name=self.name)
 

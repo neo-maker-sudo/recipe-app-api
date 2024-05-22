@@ -11,4 +11,9 @@ urlpatterns = [
         name="recipe-detail",
     ),
     path("tags/", views.TagsListAPIView.as_view(), name="tag-list"),
+    path(
+        "tags/<int:tag_id>/",
+        views.TagDetailAPIView.as_view(),
+        name="tag-detail",
+    ),
 ]

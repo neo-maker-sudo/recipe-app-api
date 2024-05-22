@@ -117,7 +117,13 @@ def update_recipe(
     user_id: int,
     repo: repository.AbstractRepository,
 ) -> domain_model.Recipe:
-    recipe: domain_model.Recipe = repo.get({"id": id}, select_related="user")
+    try:
+        recipe: domain_model.Recipe = repo.get(
+            {"id": id}, select_related="user"
+        )
+
+    except repo.model.DoesNotExist:
+        raise domain_model.RecipeNotExist
 
     if not recipe.check_ownership(user_id):
         raise domain_model.RecipeNotOwnerError
@@ -156,3 +162,26 @@ def retrieve_tags(
         raise domain_model.UserNotExist
 
     return user.tags
+
+
+@transaction.atomic
+def update_tag(
+    id: int,
+    update_fields: dict,
+    user_id: int,
+    repo: repository.AbstractRepository,
+):
+    try:
+        tag: domain_model.Tag = repo.get({"id": id}, select_related="user")
+
+    except repo.model.DoesNotExist:
+        raise domain_model.TagNotExist
+
+    if not tag.check_ownership(user_id):
+        raise domain_model.TagNotOwnerError
+
+    tag.update_detail(update_fields)
+
+    repo.update(tag)
+
+    return tag

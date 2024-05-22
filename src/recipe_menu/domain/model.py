@@ -143,8 +143,30 @@ class Recipe:
             self.link = link
 
 
+class TagNotExist(Exception):
+    message = "標籤不存在"
+    status_code = status.HTTP_400_BAD_REQUEST
+
+
+class TagNotOwnerError(Exception):
+    message = "不存在的標籤"
+    status_code = status.HTTP_404_NOT_FOUND
+
+
 class Tag:
     def __init__(self, name: str) -> None:
         self.id = None
         self.name = name
         self.user = None
+
+    def check_ownership(self, user_id: int) -> bool:
+        if self.user.id != user_id:
+            return False
+
+        return True
+
+    def update_detail(self, update_fields: dict) -> None:
+        name = update_fields.get("name", None)
+
+        if self.name != name and name is not None:
+            self.name = name

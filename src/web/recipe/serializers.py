@@ -42,3 +42,11 @@ class RecipeDetailPatchSerializerIn(serializers.Serializer):
 class TagListSerializerOut(serializers.Serializer):
     id = serializers.IntegerField()
     name = serializers.CharField()
+
+
+class TagDetailPatchSerializerIn(serializers.Serializer):
+    name = serializers.CharField()
+
+
+class TagDetailPatchSerializerOut(serializers.Serializer):
+    name = serializers.CharField()
