@@ -13,6 +13,10 @@ TOKEN_URL = reverse("user:token")
 TAGS_URL = reverse("recipe:tag-list")
 
 
+def detail_url(tag_id: int):
+    return reverse("recipe:tag-detail", args=[tag_id])
+
+
 def create_user(email, password):
     return get_user_model().objects.create_user(email=email, password=password)
 
@@ -72,3 +76,15 @@ class PrivateTagsApiTests(TestCase):
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data[0]["name"], tag.name)
         self.assertEqual(res.data[0]["id"], tag.id)
+
+    def test_update_tag(self):
+        tag = Tag.objects.create(user=self.user, name="Hello")
+
+        url = detail_url(tag.id)
+        payload = {"name": "World"}
+        res = self.client.patch(url, payload, **self.headers)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        tag.refresh_from_db()
+
+        self.assertEqual(tag.name, payload["name"])
