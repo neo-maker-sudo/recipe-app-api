@@ -142,3 +142,17 @@ def delete_recipe(
 
     del recipe
     repo.delete()
+
+
+def retrieve_tags(
+    user_id: int, order_by: str, repo: repository.AbstractRepository
+):
+    try:
+        user: domain_model.User = repo.get(
+            {"id": user_id}, order_by=order_by, prefetch_model="tags"
+        )
+
+    except repo.model.DoesNotExist:
+        raise domain_model.UserNotExist
+
+    return user.tags

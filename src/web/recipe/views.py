@@ -15,6 +15,7 @@ from recipe.serializers import (
     RecipeCreateSerializerIn,
     RecipeCreateSerializerOut,
     RecipeDetailPatchSerializerIn,
+    TagListSerializerOut,
 )
 from recipe_menu.domain import model as domain_model
 
@@ -155,7 +156,7 @@ class RecipeDetailAPIView(APIView):
             401: "",
             404: domain_model.RecipeNotOwnerError,
         },
-        methods=["PATCH"],
+        methods=["DELETE"],
     )
     def delete(self, request, *args, **kwargs):
         id = kwargs.get("recipe_id", None)
@@ -174,3 +175,30 @@ class RecipeDetailAPIView(APIView):
             return Response({"detail": exc.message}, status=exc.status_code)
 
         return Response("OK", status=status.HTTP_204_NO_CONTENT)
+
+
+class TagsListAPIView(APIView):
+    authentication_classes = [JWTStatelessUserAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request="",
+        responses={
+            200: TagListSerializerOut,
+            401: "",
+        },
+        methods=["GET"],
+    )
+    def get(self, request, *args, **kwargs):
+        order_by = request.query_params.get("o", "-name")
+
+        tags = services.retrieve_tags(
+            user_id=request.user.id,
+            order_by=order_by,
+            repo=repository.UserRepository(),
+        )
+
+        return Response(
+            TagListSerializerOut(tags, many=True).data,
+            status=status.HTTP_200_OK,
+        )

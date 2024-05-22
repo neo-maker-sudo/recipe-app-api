@@ -37,7 +37,11 @@ class UserRepository(AbstractRepository):
         return (
             self.model.objects.prefetch_related(prefetch_model)
             .get(**field)
-            .to_domain(using_relate=True, order_by=order_by)
+            .to_domain(
+                using_relate=True,
+                order_by=order_by,
+                prefetch_model=prefetch_model,
+            )
         )
 
     def add(self, user: domain_model.User):
@@ -79,3 +83,15 @@ class RecipeRepository(AbstractRepository):
     def delete(self):
         if self.instance is not None:
             self.instance.delete()
+
+
+class TagRepository(AbstractRepository):
+
+    def get(self):
+        pass
+
+    def add(self):
+        pass
+
+    def update(self):
+        pass

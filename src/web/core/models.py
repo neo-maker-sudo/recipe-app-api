@@ -74,6 +74,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         self,
         using_relate: bool = False,
         order_by: Optional[Union[str, list[str]]] = None,
+        prefetch_model: Optional[str] = None,
     ) -> domain_model.User:
         methods = domain_model.BaseUserMethods(
             check_password=self.check_password,
@@ -89,10 +90,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         )
         user.id = self.id
 
-        if using_relate:
+        if using_relate and prefetch_model == "recipes":
             user._recipes = [
                 recipe.to_domain()
                 for recipe in self.recipes.all().order_by(order_by)
+            ]
+
+        if using_relate and prefetch_model == "tags":
+            user._tags = [
+                tag.to_domain() for tag in self.tags.all().order_by(order_by)
             ]
 
         return user
@@ -161,3 +167,11 @@ class Tag(models.Model):
 
     def __str__(self):
         return self.name
+
+    def to_domain(self) -> domain_model.Tag:
+        tag = domain_model.Tag(name=self.name)
+
+        tag.id = self.id
+        tag.user = self.user
+
+        return tag

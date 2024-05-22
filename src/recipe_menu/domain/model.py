@@ -50,6 +50,7 @@ class User:
         # add extra_methods attribute for using django original User model method
         self.methods = methods
         self._recipes = None
+        self._tags = None
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, User):
@@ -76,6 +77,10 @@ class User:
     @property
     def recipes(self):
         return self._recipes
+
+    @property
+    def tags(self):
+        return self._tags
 
 
 class RecipeNotExist(Exception):
@@ -136,3 +141,10 @@ class Recipe:
 
         if self.link != link and link is not None:
             self.link = link
+
+
+class Tag:
+    def __init__(self, name: str) -> None:
+        self.id = None
+        self.name = name
+        self.user = None
