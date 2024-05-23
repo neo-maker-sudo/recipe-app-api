@@ -124,6 +124,7 @@ class Recipe(models.Model):
     )
 
     tags = models.ManyToManyField("Tag")
+    ingredients = models.ManyToManyField("Ingredient")
 
     def __str__(self) -> str:
         return self.title
@@ -215,3 +216,15 @@ class Tag(models.Model):
         tag.user = self.user
 
         return tag
+
+
+class Ingredient(models.Model):
+    name = models.CharField(max_length=255)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="ingredients",
+    )
+
+    def __str__(self):
+        return self.name
