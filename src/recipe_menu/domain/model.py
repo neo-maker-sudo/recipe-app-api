@@ -128,6 +128,7 @@ class Recipe:
         time_minutes = update_fields.get("time_minutes", None)
         price = update_fields.get("price", None)
         link = update_fields.get("link", None)
+        tags = update_fields.get("tags", None)
 
         if self.title != title and title is not None:
             self.title = title
@@ -143,6 +144,9 @@ class Recipe:
 
         if self.link != link and link is not None:
             self.link = link
+
+        if tags is not None:
+            self.tags = tags
 
 
 class TagNotExist(Exception):

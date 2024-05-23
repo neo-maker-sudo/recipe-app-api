@@ -135,6 +135,7 @@ class RecipeDetailAPIView(APIView):
                         "description"
                     ),
                     "link": serializer.validated_data.get("link"),
+                    "tags": serializer.validated_data.get("tags"),
                 },
                 user_id=request.user.id,
                 repo=repository.RecipeRepository(),
@@ -225,7 +226,7 @@ class TagDetailAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         try:
-            tag = services.update_recipe(
+            tag = services.update_tag(
                 id=id,
                 update_fields={
                     "name": serializer.validated_data.get("name"),

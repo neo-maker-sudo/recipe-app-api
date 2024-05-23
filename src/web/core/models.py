@@ -125,12 +125,28 @@ class Recipe(models.Model):
     def __str__(self) -> str:
         return self.title
 
+    def _get_or_create_tag(self, recipe: domain_model.Recipe) -> None:
+        for tag in recipe.tags:
+            tag_obj, _ = Tag.objects.get_or_create(
+                user=self.user,
+                **tag,
+            )
+            self.tags.add(tag_obj)
+
     def update_from_domain(self, recipe: domain_model.Recipe) -> None:
         self.title = recipe.title
         self.description = recipe.description
         self.time_minutes = recipe.time_minutes
         self.price = recipe.price
         self.link = recipe.link
+
+        if self.tags.exists():
+            self.tags.clear()
+            self._get_or_create_tag(recipe)
+
+        else:
+            self._get_or_create_tag(recipe)
+
         self.save()
 
     def to_domain(self) -> domain_model.Recipe:

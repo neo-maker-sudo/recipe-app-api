@@ -65,7 +65,14 @@ class RecipeRepository(AbstractRepository):
         prefetch_model: Optional[str] = None,
         select_related: Optional[str] = None,
     ) -> domain_model.Recipe:
-        if select_related is not None:
+        if select_related is not None and prefetch_model is not None:
+            self.instance = (
+                self.model.objects.select_related(select_related)
+                .prefetch_related(prefetch_model)
+                .get(**field)
+            )
+
+        elif select_related is not None:
             self.instance = self.model.objects.select_related(
                 select_related
             ).get(**field)

@@ -125,7 +125,7 @@ def update_recipe(
 ) -> domain_model.Recipe:
     try:
         recipe: domain_model.Recipe = repo.get(
-            {"id": id}, select_related="user"
+            {"id": id}, select_related="user", prefetch_model="tags"
         )
 
     except repo.model.DoesNotExist:

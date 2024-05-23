@@ -44,6 +44,7 @@ class RecipeDetailPatchSerializerIn(serializers.Serializer):
     )
     description = serializers.CharField(allow_blank=True, required=False)
     link = serializers.CharField(allow_blank=True, required=False)
+    tags = RecipeTagsSerailizer(many=True, required=False)
 
 
 class TagListSerializerOut(serializers.Serializer):
