@@ -90,15 +90,18 @@ class User(AbstractBaseUser, PermissionsMixin):
         )
         user.id = self.id
 
-        # if prefetch_model is recipes__tags means user list recipe and recipe need to list its mark tags
-        # so relation will be User -> Recipe (one to many), Recipe -> Tag (many to many)
+        # if prefetch_model is recipes__tags:
+        # user list recipe and recipe need to list its mark tags
+        # so relation will be:
+        # User -> Recipe (one to many), Recipe -> Tag (many to many)
         if using_relate and prefetch_model == "recipes__tags":
             user._recipes = [
                 recipe.to_domain()
                 for recipe in self.recipes.all().order_by(order_by)
             ]
 
-        # if prefetch_model is tags means user retrieve all of tags being created.
+        # if prefetch_model is tags:
+        # user retrieve all of tags being created.
         if using_relate and prefetch_model == "tags":
             user._tags = [
                 tag.to_domain() for tag in self.tags.all().order_by(order_by)
