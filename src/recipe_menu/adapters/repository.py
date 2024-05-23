@@ -152,3 +152,7 @@ class IngredientRepository(AbstractRepository):
     def update(self, ingredient: domain_model.Ingredient) -> None:
         if self.instance is not None:
             self.instance.update_from_domain(ingredient)
+
+    def delete(self) -> None:
+        if self.instance is not None:
+            self.instance.delete()

@@ -249,3 +249,24 @@ def update_ingredient(
     repo.update(ingredient)
 
     return ingredient
+
+
+@transaction.atomic
+def delete_ingredient(
+    id: int,
+    user_id: int,
+    repo: repository.AbstractRepository,
+) -> None:
+    try:
+        ingredient: domain_model.Ingredient = repo.get(
+            {"id": id}, select_related="user"
+        )
+
+    except repo.model.DoesNotExist:
+        raise domain_model.IngredientNotExist
+
+    if not ingredient.check_ownership(user_id):
+        raise domain_model.IngredientNotOwnerError
+
+    del ingredient
+    repo.delete()

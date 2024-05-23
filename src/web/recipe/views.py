@@ -358,3 +358,31 @@ class IngredientDetailAPIView(APIView):
             IngredientDetailPatchSerializerOut(ingredient).data,
             status=status.HTTP_200_OK,
         )
+
+    @extend_schema(
+        request="",
+        responses={
+            204: "OK",
+            400: domain_model.IngredientNotExist,
+            401: "",
+            404: domain_model.IngredientNotOwnerError,
+        },
+        methods=["DELETE"],
+    )
+    def delete(self, request, *args, **kwargs):
+        id = kwargs.get("ingredient_id", None)
+
+        try:
+            services.delete_ingredient(
+                id=id,
+                user_id=request.user.id,
+                repo=repository.IngredientRepository(),
+            )
+
+        except (
+            domain_model.IngredientNotExist,
+            domain_model.IngredientNotOwnerError,
+        ) as exc:
+            return Response({"detail": exc.message}, status=exc.status_code)
+
+        return Response("OK", status=status.HTTP_204_NO_CONTENT)
