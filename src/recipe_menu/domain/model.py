@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Callable
+from typing import Optional, Callable, Union
 from rest_framework import status
 
 
@@ -50,6 +50,7 @@ class User:
         # add extra_methods attribute for using django original User model method
         self.methods = methods
         self._recipes = None
+        self._tags = None
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, User):
@@ -77,6 +78,10 @@ class User:
     def recipes(self):
         return self._recipes
 
+    @property
+    def tags(self):
+        return self._tags
+
 
 class RecipeNotExist(Exception):
     message = "食譜不存在"
@@ -97,6 +102,7 @@ class Recipe:
         time_minutes: int,
         price: float,
         link: str,
+        tags: Union[list[str], list["Tag"], None],
     ):
         self.id = None
         self.title = title
@@ -105,6 +111,7 @@ class Recipe:
         self.price = price
         self.link = link
         self.user = None
+        self.tags = tags if tags is not None else []
 
     def mark_user(self, user) -> None:
         self.user = user
@@ -121,6 +128,7 @@ class Recipe:
         time_minutes = update_fields.get("time_minutes", None)
         price = update_fields.get("price", None)
         link = update_fields.get("link", None)
+        tags = update_fields.get("tags", None)
 
         if self.title != title and title is not None:
             self.title = title
@@ -136,3 +144,35 @@ class Recipe:
 
         if self.link != link and link is not None:
             self.link = link
+
+        if tags is not None:
+            self.tags = tags
+
+
+class TagNotExist(Exception):
+    message = "標籤不存在"
+    status_code = status.HTTP_400_BAD_REQUEST
+
+
+class TagNotOwnerError(Exception):
+    message = "不存在的標籤"
+    status_code = status.HTTP_404_NOT_FOUND
+
+
+class Tag:
+    def __init__(self, name: str) -> None:
+        self.id = None
+        self.name = name
+        self.user = None
+
+    def check_ownership(self, user_id: int) -> bool:
+        if self.user.id != user_id:
+            return False
+
+        return True
+
+    def update_detail(self, update_fields: dict) -> None:
+        name = update_fields.get("name", None)
+
+        if self.name != name and name is not None:
+            self.name = name

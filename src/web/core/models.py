@@ -74,6 +74,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         self,
         using_relate: bool = False,
         order_by: Optional[Union[str, list[str]]] = None,
+        prefetch_model: Optional[str] = None,
     ) -> domain_model.User:
         methods = domain_model.BaseUserMethods(
             check_password=self.check_password,
@@ -89,10 +90,21 @@ class User(AbstractBaseUser, PermissionsMixin):
         )
         user.id = self.id
 
-        if using_relate:
+        # if prefetch_model is recipes__tags:
+        # user list recipe and recipe need to list its mark tags
+        # so relation will be:
+        # User -> Recipe (one to many), Recipe -> Tag (many to many)
+        if using_relate and prefetch_model == "recipes__tags":
             user._recipes = [
                 recipe.to_domain()
                 for recipe in self.recipes.all().order_by(order_by)
+            ]
+
+        # if prefetch_model is tags:
+        # user retrieve all of tags being created.
+        if using_relate and prefetch_model == "tags":
+            user._tags = [
+                tag.to_domain() for tag in self.tags.all().order_by(order_by)
             ]
 
         return user
@@ -111,8 +123,18 @@ class Recipe(models.Model):
         related_name="recipes",
     )
 
+    tags = models.ManyToManyField("Tag")
+
     def __str__(self) -> str:
         return self.title
+
+    def _get_or_create_tag(self, recipe: domain_model.Recipe) -> None:
+        for tag in recipe.tags:
+            tag_obj, _ = Tag.objects.get_or_create(
+                user=self.user,
+                **tag,
+            )
+            self.tags.add(tag_obj)
 
     def update_from_domain(self, recipe: domain_model.Recipe) -> None:
         self.title = recipe.title
@@ -120,6 +142,14 @@ class Recipe(models.Model):
         self.time_minutes = recipe.time_minutes
         self.price = recipe.price
         self.link = recipe.link
+
+        if self.tags.exists():
+            self.tags.clear()
+            self._get_or_create_tag(recipe)
+
+        else:
+            self._get_or_create_tag(recipe)
+
         self.save()
 
     def to_domain(self) -> domain_model.Recipe:
@@ -129,6 +159,11 @@ class Recipe(models.Model):
             time_minutes=self.time_minutes,
             price=self.price,
             link=self.link,
+            tags=(
+                [tag.to_domain() for tag in self.tags.all()]
+                if self.tags.exists()
+                else []
+            ),
         )
 
         recipe.id = self.id
@@ -136,8 +171,10 @@ class Recipe(models.Model):
 
         return recipe
 
-    def add_from_domain(self, recipe: domain_model.Recipe):
-        recipe = Recipe.objects.create(
+    def add_from_domain(
+        self, recipe: domain_model.Recipe
+    ) -> domain_model.Recipe:
+        instance = Recipe.objects.create(
             title=recipe.title,
             description=recipe.description,
             time_minutes=recipe.time_minutes,
@@ -146,4 +183,35 @@ class Recipe(models.Model):
             user=recipe.user,
         )
 
-        return recipe
+        for tag in recipe.tags:
+            tag_obj, _ = Tag.objects.get_or_create(
+                user=recipe.user,
+                **tag,
+            )
+            instance.tags.add(tag_obj)
+
+        return instance
+
+
+class Tag(models.Model):
+    name = models.CharField(max_length=255)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="tags",
+    )
+
+    def __str__(self):
+        return self.name
+
+    def update_from_domain(self, tag: domain_model.Tag) -> None:
+        self.name = tag.name
+        self.save()
+
+    def to_domain(self) -> domain_model.Tag:
+        tag = domain_model.Tag(name=self.name)
+
+        tag.id = self.id
+        tag.user = self.user
+
+        return tag

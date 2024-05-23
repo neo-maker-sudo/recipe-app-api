@@ -15,6 +15,9 @@ from recipe.serializers import (
     RecipeCreateSerializerIn,
     RecipeCreateSerializerOut,
     RecipeDetailPatchSerializerIn,
+    TagListSerializerOut,
+    TagDetailPatchSerializerIn,
+    TagDetailPatchSerializerOut,
 )
 from recipe_menu.domain import model as domain_model
 
@@ -63,6 +66,7 @@ class RecipeListAPIView(APIView):
             price=serializer.validated_data.get("price"),
             description=serializer.validated_data.get("description"),
             link=serializer.validated_data.get("link"),
+            tags=serializer.validated_data.get("tags"),
             user_id=request.user.id,
             repo=repository.RecipeRepository(),
         )
@@ -131,6 +135,7 @@ class RecipeDetailAPIView(APIView):
                         "description"
                     ),
                     "link": serializer.validated_data.get("link"),
+                    "tags": serializer.validated_data.get("tags"),
                 },
                 user_id=request.user.id,
                 repo=repository.RecipeRepository(),
@@ -155,7 +160,7 @@ class RecipeDetailAPIView(APIView):
             401: "",
             404: domain_model.RecipeNotOwnerError,
         },
-        methods=["PATCH"],
+        methods=["DELETE"],
     )
     def delete(self, request, *args, **kwargs):
         id = kwargs.get("recipe_id", None)
@@ -170,6 +175,100 @@ class RecipeDetailAPIView(APIView):
         except (
             domain_model.RecipeNotExist,
             domain_model.RecipeNotOwnerError,
+        ) as exc:
+            return Response({"detail": exc.message}, status=exc.status_code)
+
+        return Response("OK", status=status.HTTP_204_NO_CONTENT)
+
+
+class TagsListAPIView(APIView):
+    authentication_classes = [JWTStatelessUserAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request="",
+        responses={
+            200: TagListSerializerOut,
+            401: "",
+        },
+        methods=["GET"],
+    )
+    def get(self, request, *args, **kwargs):
+        order_by = request.query_params.get("o", "-name")
+
+        tags = services.retrieve_tags(
+            user_id=request.user.id,
+            order_by=order_by,
+            repo=repository.UserRepository(),
+        )
+
+        return Response(
+            TagListSerializerOut(tags, many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class TagDetailAPIView(APIView):
+    @extend_schema(
+        request=TagDetailPatchSerializerIn,
+        responses={
+            200: TagDetailPatchSerializerOut,
+            400: domain_model.TagNotExist,
+            401: "",
+            404: domain_model.TagNotOwnerError,
+        },
+        methods=["PATCH"],
+    )
+    def patch(self, request, *args, **kwargs):
+        id = kwargs.get("tag_id", None)
+
+        serializer = TagDetailPatchSerializerIn(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            tag = services.update_tag(
+                id=id,
+                update_fields={
+                    "name": serializer.validated_data.get("name"),
+                },
+                user_id=request.user.id,
+                repo=repository.TagRepository(),
+            )
+
+        except (
+            domain_model.TagNotExist,
+            domain_model.TagNotOwnerError,
+        ) as exc:
+            return Response({"detail": exc.message}, status=exc.status_code)
+
+        return Response(
+            TagDetailPatchSerializerOut(tag).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @extend_schema(
+        request="",
+        responses={
+            204: "OK",
+            400: domain_model.TagNotExist,
+            401: "",
+            404: domain_model.TagNotOwnerError,
+        },
+        methods=["DELETE"],
+    )
+    def delete(self, request, *args, **kwargs):
+        id = kwargs.get("tag_id", None)
+
+        try:
+            services.delete_tag(
+                id=id,
+                user_id=request.user.id,
+                repo=repository.TagRepository(),
+            )
+
+        except (
+            domain_model.TagNotExist,
+            domain_model.TagNotOwnerError,
         ) as exc:
             return Response({"detail": exc.message}, status=exc.status_code)
 

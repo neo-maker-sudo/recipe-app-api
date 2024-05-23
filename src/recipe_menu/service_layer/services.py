@@ -1,4 +1,6 @@
 import dataclasses
+from typing import Optional
+
 from django.db import transaction
 from rest_framework_simplejwt.tokens import AccessToken
 
@@ -62,7 +64,7 @@ def retrieve_recipes(
 ) -> set:
     try:
         user: domain_model.User = repo.get(
-            {"id": user_id}, order_by=order_by, prefetch_model="recipes"
+            {"id": user_id}, order_by=order_by, prefetch_model="recipes__tags"
         )
 
     except repo.model.DoesNotExist:
@@ -76,7 +78,9 @@ def retrieve_recipe(
 ) -> domain_model.Recipe:
 
     try:
-        recipe: domain_model.Recipe = repo.get({"id": id})
+        recipe: domain_model.Recipe = repo.get(
+            {"id": id}, prefetch_model="tags"
+        )
 
     except repo.model.DoesNotExist:
         raise domain_model.RecipeNotExist
@@ -92,6 +96,7 @@ def create_recipe(
     link: str,
     user_id: int,
     repo: repository.AbstractRepository,
+    tags: Optional[list[str]] = None,
 ) -> None:
     try:
         user = repository.UserRepository.model.objects.get(id=user_id)
@@ -105,6 +110,7 @@ def create_recipe(
         price=price,
         time_minutes=time_minutes,
         link=link,
+        tags=tags,
     )
     recipe.mark_user(user)
     repo.add(recipe)
@@ -117,7 +123,13 @@ def update_recipe(
     user_id: int,
     repo: repository.AbstractRepository,
 ) -> domain_model.Recipe:
-    recipe: domain_model.Recipe = repo.get({"id": id}, select_related="user")
+    try:
+        recipe: domain_model.Recipe = repo.get(
+            {"id": id}, select_related="user", prefetch_model="tags"
+        )
+
+    except repo.model.DoesNotExist:
+        raise domain_model.RecipeNotExist
 
     if not recipe.check_ownership(user_id):
         raise domain_model.RecipeNotOwnerError
@@ -141,4 +153,60 @@ def delete_recipe(
         raise domain_model.RecipeNotOwnerError
 
     del recipe
+    repo.delete()
+
+
+def retrieve_tags(
+    user_id: int, order_by: str, repo: repository.AbstractRepository
+):
+    try:
+        user: domain_model.User = repo.get(
+            {"id": user_id}, order_by=order_by, prefetch_model="tags"
+        )
+
+    except repo.model.DoesNotExist:
+        raise domain_model.UserNotExist
+
+    return user.tags
+
+
+@transaction.atomic
+def update_tag(
+    id: int,
+    update_fields: dict,
+    user_id: int,
+    repo: repository.AbstractRepository,
+):
+    try:
+        tag: domain_model.Tag = repo.get({"id": id}, select_related="user")
+
+    except repo.model.DoesNotExist:
+        raise domain_model.TagNotExist
+
+    if not tag.check_ownership(user_id):
+        raise domain_model.TagNotOwnerError
+
+    tag.update_detail(update_fields)
+
+    repo.update(tag)
+
+    return tag
+
+
+@transaction.atomic
+def delete_tag(
+    id: int,
+    user_id: int,
+    repo: repository.AbstractRepository,
+) -> None:
+    try:
+        tag: domain_model.Tag = repo.get({"id": id}, select_related="user")
+
+    except repo.model.DoesNotExist:
+        raise domain_model.TagNotExist
+
+    if not tag.check_ownership(user_id):
+        raise domain_model.TagNotOwnerError
+
+    del tag
     repo.delete()
