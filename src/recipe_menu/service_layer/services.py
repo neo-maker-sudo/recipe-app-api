@@ -224,3 +224,28 @@ def retrieve_ingredients(
         raise domain_model.UserNotExist
 
     return user.ingredients
+
+
+@transaction.atomic
+def update_ingredient(
+    id: int,
+    update_fields: dict,
+    user_id: int,
+    repo: repository.AbstractRepository,
+):
+    try:
+        ingredient: domain_model.Ingredient = repo.get(
+            {"id": id}, select_related="user"
+        )
+
+    except repo.model.DoesNotExist:
+        raise domain_model.IngredientNotExist
+
+    if not ingredient.check_ownership(user_id):
+        raise domain_model.IngredientNotOwnerError
+
+    ingredient.update_detail(update_fields)
+
+    repo.update(ingredient)
+
+    return ingredient

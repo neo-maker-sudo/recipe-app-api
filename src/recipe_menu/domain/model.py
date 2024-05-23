@@ -183,8 +183,30 @@ class Tag:
             self.name = name
 
 
+class IngredientNotExist(Exception):
+    message = "原料不存在"
+    status_code = status.HTTP_400_BAD_REQUEST
+
+
+class IngredientNotOwnerError(Exception):
+    message = "不存在的原料"
+    status_code = status.HTTP_404_NOT_FOUND
+
+
 class Ingredient:
     def __init__(self, name: str, id: Optional[int] = None):
         self.id = id
         self.name = name
         self.user = None
+
+    def check_ownership(self, user_id: int) -> bool:
+        if self.user is None or self.user.id != user_id:
+            return False
+
+        return True
+
+    def update_detail(self, update_fields: dict) -> None:
+        name = update_fields.get("name", None)
+
+        if self.name != name and name is not None:
+            self.name = name

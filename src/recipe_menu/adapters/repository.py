@@ -127,3 +127,28 @@ class TagRepository(AbstractRepository):
     def delete(self) -> None:
         if self.instance is not None:
             self.instance.delete()
+
+
+class IngredientRepository(AbstractRepository):
+    model = django_apps.get_model("core.Ingredient")
+    instance = None
+
+    def get(
+        self, field: dict[str, int], select_related: Optional[str] = None
+    ) -> domain_model.Ingredient:
+        if select_related is not None:
+            self.instance = self.model.objects.select_related(
+                select_related
+            ).get(**field)
+
+        else:
+            self.instance = self.model.objects.get(**field)
+
+        return self.instance.to_domain()
+
+    def add(self):
+        pass
+
+    def update(self, ingredient: domain_model.Ingredient) -> None:
+        if self.instance is not None:
+            self.instance.update_from_domain(ingredient)

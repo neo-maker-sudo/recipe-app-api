@@ -237,6 +237,10 @@ class Ingredient(models.Model):
     def __str__(self):
         return self.name
 
+    def update_from_domain(self, ingredient: domain_model.Ingredient) -> None:
+        self.name = ingredient.name
+        self.save()
+
     def to_domain(self):
         ingredient = domain_model.Ingredient(id=self.id, name=self.name)
         ingredient.user = self.user

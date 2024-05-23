@@ -19,6 +19,8 @@ from recipe.serializers import (
     TagDetailPatchSerializerIn,
     TagDetailPatchSerializerOut,
     IngredientListSerializerOut,
+    IngredientDetailPatchSerializerIn,
+    IngredientDetailPatchSerializerOut,
 )
 from recipe_menu.domain import model as domain_model
 
@@ -314,5 +316,45 @@ class IngredientListAPIView(APIView):
 
         return Response(
             IngredientListSerializerOut(ingredients, many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class IngredientDetailAPIView(APIView):
+
+    @extend_schema(
+        request=IngredientDetailPatchSerializerIn,
+        responses={
+            200: IngredientDetailPatchSerializerOut,
+            400: domain_model.IngredientNotExist,
+            401: "",
+            404: domain_model.IngredientNotOwnerError,
+        },
+        methods=["PATCH"],
+    )
+    def patch(self, request, *args, **kwargs):
+        id = kwargs.get("ingredient_id", None)
+
+        serializer = IngredientDetailPatchSerializerIn(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            ingredient = services.update_ingredient(
+                id=id,
+                update_fields={
+                    "name": serializer.validated_data.get("name"),
+                },
+                user_id=request.user.id,
+                repo=repository.IngredientRepository(),
+            )
+
+        except (
+            domain_model.IngredientNotExist,
+            domain_model.IngredientNotOwnerError,
+        ) as exc:
+            return Response({"detail": exc.message}, status=exc.status_code)
+
+        return Response(
+            IngredientDetailPatchSerializerOut(ingredient).data,
             status=status.HTTP_200_OK,
         )
