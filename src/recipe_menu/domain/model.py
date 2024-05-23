@@ -51,6 +51,7 @@ class User:
         self.methods = methods
         self._recipes = None
         self._tags = None
+        self._ingredients = None
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, User):
@@ -81,6 +82,10 @@ class User:
     @property
     def tags(self):
         return self._tags
+
+    @property
+    def ingredients(self):
+        return self._ingredients
 
 
 class RecipeNotExist(Exception):
@@ -176,3 +181,10 @@ class Tag:
 
         if self.name != name and name is not None:
             self.name = name
+
+
+class Ingredient:
+    def __init__(self, name: str, id: Optional[int] = None):
+        self.id = id
+        self.name = name
+        self.user = None

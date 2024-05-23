@@ -18,6 +18,7 @@ from recipe.serializers import (
     TagListSerializerOut,
     TagDetailPatchSerializerIn,
     TagDetailPatchSerializerOut,
+    IngredientListSerializerOut,
 )
 from recipe_menu.domain import model as domain_model
 
@@ -30,6 +31,7 @@ class RecipeListAPIView(APIView):
         request="",
         responses={
             200: RecipeListSerializerOut,
+            400: domain_model.UserNotExist,
             401: "",
         },
         methods=["GET"],
@@ -37,11 +39,15 @@ class RecipeListAPIView(APIView):
     def get(self, request, *args, **kwargs):
         order_by = request.query_params.get("o", "-id")
 
-        recipes = services.retrieve_recipes(
-            user_id=request.user.id,
-            order_by=order_by,
-            repo=repository.UserRepository(),
-        )
+        try:
+            recipes = services.retrieve_recipes(
+                user_id=request.user.id,
+                order_by=order_by,
+                repo=repository.UserRepository(),
+            )
+
+        except domain_model.UserNotExist as exc:
+            return Response({"detail": exc.message}, status=exc.status_code)
 
         return Response(
             RecipeListSerializerOut(recipes, many=True).data,
@@ -189,6 +195,7 @@ class TagsListAPIView(APIView):
         request="",
         responses={
             200: TagListSerializerOut,
+            400: domain_model.UserNotExist,
             401: "",
         },
         methods=["GET"],
@@ -196,11 +203,15 @@ class TagsListAPIView(APIView):
     def get(self, request, *args, **kwargs):
         order_by = request.query_params.get("o", "-name")
 
-        tags = services.retrieve_tags(
-            user_id=request.user.id,
-            order_by=order_by,
-            repo=repository.UserRepository(),
-        )
+        try:
+            tags = services.retrieve_tags(
+                user_id=request.user.id,
+                order_by=order_by,
+                repo=repository.UserRepository(),
+            )
+
+        except domain_model.UserNotExist as exc:
+            return Response({"detail": exc.message}, status=exc.status_code)
 
         return Response(
             TagListSerializerOut(tags, many=True).data,
@@ -273,3 +284,35 @@ class TagDetailAPIView(APIView):
             return Response({"detail": exc.message}, status=exc.status_code)
 
         return Response("OK", status=status.HTTP_204_NO_CONTENT)
+
+
+class IngredientListAPIView(APIView):
+    authentication_classes = [JWTStatelessUserAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request="",
+        responses={
+            200: IngredientListSerializerOut,
+            400: domain_model.UserNotExist,
+            401: "",
+        },
+        methods=["GET"],
+    )
+    def get(self, request, *args, **kwargs):
+        order_by = request.query_params.get("o", "-name")
+
+        try:
+            ingredients = services.retrieve_ingredients(
+                user_id=request.user.id,
+                order_by=order_by,
+                repo=repository.UserRepository(),
+            )
+
+        except domain_model.UserNotExist as exc:
+            return Response({"detail": exc.message}, status=exc.status_code)
+
+        return Response(
+            IngredientListSerializerOut(ingredients, many=True).data,
+            status=status.HTTP_200_OK,
+        )

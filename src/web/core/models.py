@@ -107,6 +107,14 @@ class User(AbstractBaseUser, PermissionsMixin):
                 tag.to_domain() for tag in self.tags.all().order_by(order_by)
             ]
 
+        # if prefetch_model is ingredients:
+        # user retrieve all of ingredients being created.
+        if using_relate and prefetch_model == "ingredients":
+            user._ingredients = [
+                ingredient.to_domain()
+                for ingredient in self.ingredients.all().order_by(order_by)
+            ]
+
         return user
 
 
@@ -228,3 +236,9 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return self.name
+
+    def to_domain(self):
+        ingredient = domain_model.Ingredient(id=self.id, name=self.name)
+        ingredient.user = self.user
+
+        return ingredient

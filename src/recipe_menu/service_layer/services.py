@@ -210,3 +210,17 @@ def delete_tag(
 
     del tag
     repo.delete()
+
+
+def retrieve_ingredients(
+    user_id: int, order_by: str, repo: repository.AbstractRepository
+):
+    try:
+        user: domain_model.User = repo.get(
+            {"id": user_id}, order_by=order_by, prefetch_model="ingredients"
+        )
+
+    except repo.model.DoesNotExist:
+        raise domain_model.UserNotExist
+
+    return user.ingredients

@@ -11,6 +11,7 @@ from .services import (
     retrieve_tags,
     update_tag,
     delete_tag,
+    retrieve_ingredients,
 )
 
 __all__ = [
@@ -26,4 +27,5 @@ __all__ = [
     "retrieve_tags",
     "update_tag",
     "delete_tag",
+    "retrieve_ingredients",
 ]
