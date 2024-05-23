@@ -13,6 +13,10 @@ TOKEN_URL = reverse("user:token")
 INGREDIENTS_URLS = reverse("recipe:ingredient-list")
 
 
+def detail_url(ingredient_id: int):
+    return reverse("recipe:ingredient-detail", args=[ingredient_id])
+
+
 def create_user(email, password):
     return get_user_model().objects.create_user(email=email, password=password)
 
@@ -75,3 +79,14 @@ class PrivateIngredientAPITests(TestCase):
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data[0]["name"], ingredient.name)
         self.assertEqual(res.data[0]["id"], ingredient.id)
+
+    def test_update_ingredient(self):
+        ingredient = Ingredient.objects.create(user=self.user, name="ingre1")
+
+        payload = {"name": "ingre2"}
+        url = detail_url(ingredient.id)
+        res = self.client.patch(url, payload, **self.headers)
+        self.assert_200(res.status_code)
+
+        ingredient.refresh_from_db()
+        self.assertEqual(ingredient.name, payload["name"])
