@@ -1,4 +1,6 @@
 import dataclasses
+from typing import Optional
+
 from django.db import transaction
 from rest_framework_simplejwt.tokens import AccessToken
 
@@ -62,7 +64,7 @@ def retrieve_recipes(
 ) -> set:
     try:
         user: domain_model.User = repo.get(
-            {"id": user_id}, order_by=order_by, prefetch_model="recipes"
+            {"id": user_id}, order_by=order_by, prefetch_model="recipes__tags"
         )
 
     except repo.model.DoesNotExist:
@@ -76,7 +78,9 @@ def retrieve_recipe(
 ) -> domain_model.Recipe:
 
     try:
-        recipe: domain_model.Recipe = repo.get({"id": id})
+        recipe: domain_model.Recipe = repo.get(
+            {"id": id}, prefetch_model="tags"
+        )
 
     except repo.model.DoesNotExist:
         raise domain_model.RecipeNotExist
@@ -92,6 +96,7 @@ def create_recipe(
     link: str,
     user_id: int,
     repo: repository.AbstractRepository,
+    tags: Optional[list[str]] = None,
 ) -> None:
     try:
         user = repository.UserRepository.model.objects.get(id=user_id)
@@ -105,6 +110,7 @@ def create_recipe(
         price=price,
         time_minutes=time_minutes,
         link=link,
+        tags=tags,
     )
     recipe.mark_user(user)
     repo.add(recipe)

@@ -66,6 +66,7 @@ class RecipeListAPIView(APIView):
             price=serializer.validated_data.get("price"),
             description=serializer.validated_data.get("description"),
             link=serializer.validated_data.get("link"),
+            tags=serializer.validated_data.get("tags"),
             user_id=request.user.id,
             repo=repository.RecipeRepository(),
         )

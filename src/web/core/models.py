@@ -90,12 +90,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         )
         user.id = self.id
 
-        if using_relate and prefetch_model == "recipes":
+        # if prefetch_model is recipes__tags means user list recipe and recipe need to list its mark tags
+        # so relation will be User -> Recipe (one to many), Recipe -> Tag (many to many)
+        if using_relate and prefetch_model == "recipes__tags":
             user._recipes = [
                 recipe.to_domain()
                 for recipe in self.recipes.all().order_by(order_by)
             ]
 
+        # if prefetch_model is tags means user retrieve all of tags being created.
         if using_relate and prefetch_model == "tags":
             user._tags = [
                 tag.to_domain() for tag in self.tags.all().order_by(order_by)
@@ -137,6 +140,11 @@ class Recipe(models.Model):
             time_minutes=self.time_minutes,
             price=self.price,
             link=self.link,
+            tags=(
+                [tag.to_domain() for tag in self.tags.all()]
+                if self.tags.exists()
+                else []
+            ),
         )
 
         recipe.id = self.id
@@ -144,8 +152,10 @@ class Recipe(models.Model):
 
         return recipe
 
-    def add_from_domain(self, recipe: domain_model.Recipe):
-        recipe = Recipe.objects.create(
+    def add_from_domain(
+        self, recipe: domain_model.Recipe
+    ) -> domain_model.Recipe:
+        instance = Recipe.objects.create(
             title=recipe.title,
             description=recipe.description,
             time_minutes=recipe.time_minutes,
@@ -154,7 +164,14 @@ class Recipe(models.Model):
             user=recipe.user,
         )
 
-        return recipe
+        for tag in recipe.tags:
+            tag_obj, _ = Tag.objects.get_or_create(
+                user=recipe.user,
+                **tag,
+            )
+            instance.tags.add(tag_obj)
+
+        return instance
 
 
 class Tag(models.Model):

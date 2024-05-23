@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Callable
+from typing import Optional, Callable, Union
 from rest_framework import status
 
 
@@ -102,6 +102,7 @@ class Recipe:
         time_minutes: int,
         price: float,
         link: str,
+        tags: Union[list[str], list["Tag"], None],
     ):
         self.id = None
         self.title = title
@@ -110,6 +111,7 @@ class Recipe:
         self.price = price
         self.link = link
         self.user = None
+        self.tags = tags if tags is not None else []
 
     def mark_user(self, user) -> None:
         self.user = user
