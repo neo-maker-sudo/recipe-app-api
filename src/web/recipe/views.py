@@ -59,7 +59,7 @@ class RecipeListAPIView(APIView):
     @extend_schema(
         request=RecipeCreateSerializerIn,
         responses={
-            201: RecipeCreateSerializerOut,
+            201: RecipeDetailSerializerOut,
             401: "",
         },
         methods=["POST"],
@@ -68,19 +68,20 @@ class RecipeListAPIView(APIView):
         serializer = RecipeCreateSerializerIn(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        services.create_recipe(
+        recipe = services.create_recipe(
             title=serializer.validated_data.get("title"),
             time_minutes=serializer.validated_data.get("time_minutes"),
             price=serializer.validated_data.get("price"),
             description=serializer.validated_data.get("description"),
             link=serializer.validated_data.get("link"),
             tags=serializer.validated_data.get("tags"),
+            ingredients=serializer.validated_data.get("ingredients"),
             user_id=request.user.id,
             repo=repository.RecipeRepository(),
         )
 
         return Response(
-            "OK",
+            RecipeDetailSerializerOut(recipe).data,
             status=status.HTTP_201_CREATED,
         )
 

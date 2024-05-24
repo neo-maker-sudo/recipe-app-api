@@ -5,6 +5,10 @@ class RecipeTagsSerailizer(serializers.Serializer):
     name = serializers.CharField()
 
 
+class RecipeIngredientsSerializer(serializers.Serializer):
+    name = serializers.CharField()
+
+
 class RecipeListSerializerOut(serializers.Serializer):
     id = serializers.IntegerField()
     title = serializers.CharField()
@@ -17,6 +21,7 @@ class RecipeListSerializerOut(serializers.Serializer):
 class RecipeDetailSerializerOut(RecipeListSerializerOut):
     description = serializers.CharField()
     tags = RecipeTagsSerailizer(many=True, required=False)
+    ingredients = RecipeIngredientsSerializer(many=True, required=False)
 
 
 class RecipeCreateSerializerIn(serializers.Serializer):
@@ -26,6 +31,7 @@ class RecipeCreateSerializerIn(serializers.Serializer):
     description = serializers.CharField(allow_blank=True)
     link = serializers.CharField(allow_blank=True)
     tags = RecipeTagsSerailizer(many=True, required=False)
+    ingredients = RecipeIngredientsSerializer(many=True, required=False)
 
 
 class RecipeCreateSerializerOut(serializers.Serializer):

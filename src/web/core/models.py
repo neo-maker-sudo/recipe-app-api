@@ -173,6 +173,14 @@ class Recipe(models.Model):
                 if self.tags.exists()
                 else []
             ),
+            ingredients=(
+                [
+                    ingredient.to_domain()
+                    for ingredient in self.ingredients.all()
+                ]
+                if self.ingredients.exists()
+                else []
+            ),
         )
 
         recipe.id = self.id
@@ -198,6 +206,12 @@ class Recipe(models.Model):
                 **tag,
             )
             instance.tags.add(tag_obj)
+
+        for ingredient in recipe.ingredients:
+            ingredient_obj, _ = Ingredient.objects.get_or_create(
+                user=recipe.user, **ingredient
+            )
+            instance.ingredients.add(ingredient_obj)
 
         return instance
 

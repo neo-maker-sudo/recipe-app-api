@@ -97,7 +97,8 @@ def create_recipe(
     user_id: int,
     repo: repository.AbstractRepository,
     tags: Optional[list[str]] = None,
-) -> None:
+    ingredients: Optional[list[str]] = None,
+) -> domain_model.Recipe:
     try:
         user = repository.UserRepository.model.objects.get(id=user_id)
 
@@ -111,9 +112,12 @@ def create_recipe(
         time_minutes=time_minutes,
         link=link,
         tags=tags,
+        ingredients=ingredients,
     )
     recipe.mark_user(user)
     repo.add(recipe)
+
+    return recipe
 
 
 @transaction.atomic

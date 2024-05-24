@@ -108,6 +108,7 @@ class Recipe:
         price: float,
         link: str,
         tags: Union[list[str], list["Tag"], None],
+        ingredients: Union[list[str], list["Ingredient"], None],
     ):
         self.id = None
         self.title = title
@@ -117,6 +118,7 @@ class Recipe:
         self.link = link
         self.user = None
         self.tags = tags if tags is not None else []
+        self.ingredients = ingredients if ingredients is not None else []
 
     def mark_user(self, user) -> None:
         self.user = user
