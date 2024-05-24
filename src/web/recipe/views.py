@@ -13,7 +13,6 @@ from recipe.serializers import (
     RecipeListSerializerOut,
     RecipeDetailSerializerOut,
     RecipeCreateSerializerIn,
-    RecipeCreateSerializerOut,
     RecipeDetailPatchSerializerIn,
     TagListSerializerOut,
     TagDetailPatchSerializerIn,

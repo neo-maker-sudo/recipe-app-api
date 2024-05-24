@@ -1,11 +1,21 @@
 from rest_framework import serializers
 
 
-class RecipeTagsSerailizer(serializers.Serializer):
+class RecipeTagsSerailizerIn(serializers.Serializer):
     name = serializers.CharField()
 
 
-class RecipeIngredientsSerializer(serializers.Serializer):
+class RecipeTagsSerailizerOut(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+
+
+class RecipeIngredientsSerializerIn(serializers.Serializer):
+    name = serializers.CharField()
+
+
+class RecipeIngredientsSerializerOut(serializers.Serializer):
+    id = serializers.IntegerField()
     name = serializers.CharField()
 
 
@@ -15,13 +25,14 @@ class RecipeListSerializerOut(serializers.Serializer):
     time_minutes = serializers.IntegerField()
     price = serializers.DecimalField(max_digits=5, decimal_places=2)
     link = serializers.CharField()
-    tags = RecipeTagsSerailizer(many=True, required=False)
+    tags = RecipeTagsSerailizerOut(many=True, required=False)
+    ingredients = RecipeIngredientsSerializerOut(many=True, required=False)
 
 
 class RecipeDetailSerializerOut(RecipeListSerializerOut):
     description = serializers.CharField()
-    tags = RecipeTagsSerailizer(many=True, required=False)
-    ingredients = RecipeIngredientsSerializer(many=True, required=False)
+    tags = RecipeTagsSerailizerOut(many=True, required=False)
+    ingredients = RecipeIngredientsSerializerOut(many=True, required=False)
 
 
 class RecipeCreateSerializerIn(serializers.Serializer):
@@ -30,8 +41,8 @@ class RecipeCreateSerializerIn(serializers.Serializer):
     price = serializers.DecimalField(max_digits=5, decimal_places=2)
     description = serializers.CharField(allow_blank=True)
     link = serializers.CharField(allow_blank=True)
-    tags = RecipeTagsSerailizer(many=True, required=False)
-    ingredients = RecipeIngredientsSerializer(many=True, required=False)
+    tags = RecipeTagsSerailizerIn(many=True, required=False)
+    ingredients = RecipeIngredientsSerializerIn(many=True, required=False)
 
 
 class RecipeCreateSerializerOut(serializers.Serializer):
@@ -50,8 +61,8 @@ class RecipeDetailPatchSerializerIn(serializers.Serializer):
     )
     description = serializers.CharField(allow_blank=True, required=False)
     link = serializers.CharField(allow_blank=True, required=False)
-    tags = RecipeTagsSerailizer(many=True, required=False)
-    ingredients = RecipeIngredientsSerializer(many=True, required=False)
+    tags = RecipeTagsSerailizerIn(many=True, required=False)
+    ingredients = RecipeIngredientsSerializerIn(many=True, required=False)
 
 
 class TagListSerializerOut(serializers.Serializer):

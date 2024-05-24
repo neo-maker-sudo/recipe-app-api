@@ -139,15 +139,20 @@ class Recipe(models.Model):
 
     def _get_or_create_instance(
         self,
-        fields: list[str],
+        domain_models: list[str],
         model: Union["Tag", "Ingredient"],
         relate_user,
         relate_manager,
     ) -> None:
-        # fields is new value being insert into db, like: {"name": "tag1"}
-        # relate_manager for add recipe relation instance (tag, ingredients)
-        for field in fields:
-            obj, _ = model.objects.get_or_create(user=relate_user, **field)
+        # domain_models:
+        # is new value being insert into db, like: {"name": "tag1"}
+        # relate_manager:
+        # for add recipe relation instance (tag, ingredients)
+        for entry in domain_models:
+            obj, _ = model.objects.get_or_create(
+                user=relate_user, **entry.to_dict()
+            )
+            entry.id = obj.id
             relate_manager.add(obj)
 
     def update_from_domain(self, recipe: domain_model.Recipe) -> None:
@@ -165,7 +170,7 @@ class Recipe(models.Model):
 
         if recipe.update_tags:
             self._get_or_create_instance(
-                fields=recipe.tags,
+                domain_models=recipe.tags,
                 model=Tag,
                 relate_user=self.user,
                 relate_manager=self.tags,
@@ -173,7 +178,7 @@ class Recipe(models.Model):
 
         if recipe.update_ingredients:
             self._get_or_create_instance(
-                fields=recipe.ingredients,
+                domain_models=recipe.ingredients,
                 model=Ingredient,
                 relate_user=self.user,
                 relate_manager=self.ingredients,
@@ -191,7 +196,7 @@ class Recipe(models.Model):
             tags=(
                 [tag.to_domain() for tag in self.tags.all()]
                 if self.tags.exists()
-                else []
+                else None
             ),
             ingredients=(
                 [
@@ -199,7 +204,7 @@ class Recipe(models.Model):
                     for ingredient in self.ingredients.all()
                 ]
                 if self.ingredients.exists()
-                else []
+                else None
             ),
         )
 
@@ -221,13 +226,13 @@ class Recipe(models.Model):
         )
 
         self._get_or_create_instance(
-            fields=recipe.tags,
+            domain_models=recipe.tags,
             model=Tag,
             relate_user=recipe.user,
             relate_manager=instance.tags,
         )
         self._get_or_create_instance(
-            fields=recipe.ingredients,
+            domain_models=recipe.ingredients,
             model=Ingredient,
             relate_user=recipe.user,
             relate_manager=instance.ingredients,

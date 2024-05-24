@@ -286,7 +286,8 @@ class PrivateRecipeAPITests(TestCase):
         )
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(res.data["ingredients"], ingredients)
+        for index, ingredient in enumerate(res.data["ingredients"]):
+            self.assertEqual(ingredient["name"], ingredients[index]["name"])
 
         recipes = Recipe.objects.filter(user=self.user)
         self.assertEqual(recipes.count(), 1)
@@ -310,7 +311,8 @@ class PrivateRecipeAPITests(TestCase):
         )
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(res.data["ingredients"], ingredients)
+        for index, ingredient in enumerate(res.data["ingredients"]):
+            self.assertEqual(ingredient["name"], ingredients[index]["name"])
 
         recipes = Recipe.objects.filter(user=self.user)
         self.assertEqual(recipes.count(), 1)

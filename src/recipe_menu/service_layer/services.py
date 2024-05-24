@@ -111,8 +111,19 @@ def create_recipe(
         price=price,
         time_minutes=time_minutes,
         link=link,
-        tags=tags,
-        ingredients=ingredients,
+        tags=(
+            [domain_model.Tag(name=tag["name"]) for tag in tags]
+            if tags is not None
+            else None
+        ),
+        ingredients=(
+            [
+                domain_model.Ingredient(name=ingredient["name"])
+                for ingredient in ingredients
+            ]
+            if ingredients is not None
+            else None
+        ),
     )
     recipe.mark_user(user)
     repo.add(recipe)

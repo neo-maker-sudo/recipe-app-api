@@ -107,8 +107,8 @@ class Recipe:
         time_minutes: int,
         price: float,
         link: str,
-        tags: Union[list[str], list["Tag"], None],
-        ingredients: Union[list[str], list["Ingredient"], None],
+        tags: Union[list["Tag"], None],
+        ingredients: Union[list["Ingredient"], None],
     ):
         self.id = None
         self.title = title
@@ -157,11 +157,14 @@ class Recipe:
 
         if tags is not None:
             self.update_tags = True
-            self.tags = tags
+            self.tags = [Tag(name=tag["name"]) for tag in tags]
 
         if ingredients is not None:
             self.update_ingredients = True
-            self.ingredients = ingredients
+            self.ingredients = [
+                Ingredient(name=ingredient["name"])
+                for ingredient in ingredients
+            ]
 
 
 class TagNotExist(Exception):
@@ -188,6 +191,11 @@ class Tag:
 
     def __hash__(self) -> int:
         return hash(self.name)
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+        }
 
     def check_ownership(self, user_id: int) -> bool:
         if self.user.id != user_id:
@@ -226,6 +234,11 @@ class Ingredient:
 
     def __hash__(self) -> int:
         return hash(self.name)
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+        }
 
     def check_ownership(self, user_id: int) -> bool:
         if self.user is None or self.user.id != user_id:
