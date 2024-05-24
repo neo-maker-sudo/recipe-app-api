@@ -145,6 +145,9 @@ class RecipeDetailAPIView(APIView):
                     ),
                     "link": serializer.validated_data.get("link"),
                     "tags": serializer.validated_data.get("tags"),
+                    "ingredients": serializer.validated_data.get(
+                        "ingredients"
+                    ),
                 },
                 user_id=request.user.id,
                 repo=repository.RecipeRepository(),

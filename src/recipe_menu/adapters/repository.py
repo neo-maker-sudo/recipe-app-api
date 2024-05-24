@@ -62,13 +62,13 @@ class RecipeRepository(AbstractRepository):
     def get(
         self,
         field: dict[str, int],
-        prefetch_model: Optional[str] = None,
+        prefetch_model: Optional[list[str]] = None,
         select_related: Optional[str] = None,
     ) -> domain_model.Recipe:
         if select_related is not None and prefetch_model is not None:
             self.instance = (
                 self.model.objects.select_related(select_related)
-                .prefetch_related(prefetch_model)
+                .prefetch_related(*prefetch_model)
                 .get(**field)
             )
 
@@ -79,7 +79,7 @@ class RecipeRepository(AbstractRepository):
 
         elif prefetch_model is not None:
             self.instance = self.model.objects.prefetch_related(
-                prefetch_model
+                *prefetch_model
             ).get(**field)
 
         else:

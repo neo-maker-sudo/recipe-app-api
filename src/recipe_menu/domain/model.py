@@ -118,7 +118,9 @@ class Recipe:
         self.link = link
         self.user = None
         self.tags = tags if tags is not None else []
+        self.update_tags = False
         self.ingredients = ingredients if ingredients is not None else []
+        self.update_ingredients = False
 
     def mark_user(self, user) -> None:
         self.user = user
@@ -136,6 +138,7 @@ class Recipe:
         price = update_fields.get("price", None)
         link = update_fields.get("link", None)
         tags = update_fields.get("tags", None)
+        ingredients = update_fields.get("ingredients", None)
 
         if self.title != title and title is not None:
             self.title = title
@@ -153,7 +156,12 @@ class Recipe:
             self.link = link
 
         if tags is not None:
+            self.update_tags = True
             self.tags = tags
+
+        if ingredients is not None:
+            self.update_ingredients = True
+            self.ingredients = ingredients
 
 
 class TagNotExist(Exception):
@@ -171,6 +179,15 @@ class Tag:
         self.id = None
         self.name = name
         self.user = None
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Tag):
+            return False
+
+        return other.name == self.name
+
+    def __hash__(self) -> int:
+        return hash(self.name)
 
     def check_ownership(self, user_id: int) -> bool:
         if self.user.id != user_id:
@@ -200,6 +217,15 @@ class Ingredient:
         self.id = id
         self.name = name
         self.user = None
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Ingredient):
+            return False
+
+        return other.name == self.name
+
+    def __hash__(self) -> int:
+        return hash(self.name)
 
     def check_ownership(self, user_id: int) -> bool:
         if self.user is None or self.user.id != user_id:

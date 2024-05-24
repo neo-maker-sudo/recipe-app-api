@@ -137,13 +137,18 @@ class Recipe(models.Model):
     def __str__(self) -> str:
         return self.title
 
-    def _get_or_create_tag(self, recipe: domain_model.Recipe) -> None:
-        for tag in recipe.tags:
-            tag_obj, _ = Tag.objects.get_or_create(
-                user=self.user,
-                **tag,
-            )
-            self.tags.add(tag_obj)
+    def _get_or_create_instance(
+        self,
+        fields: list[str],
+        model: Union["Tag", "Ingredient"],
+        relate_user,
+        relate_manager,
+    ) -> None:
+        # fields is new value being insert into db, like: {"name": "tag1"}
+        # relate_manager for add recipe relation instance (tag, ingredients)
+        for field in fields:
+            obj, _ = model.objects.get_or_create(user=relate_user, **field)
+            relate_manager.add(obj)
 
     def update_from_domain(self, recipe: domain_model.Recipe) -> None:
         self.title = recipe.title
@@ -152,12 +157,27 @@ class Recipe(models.Model):
         self.price = recipe.price
         self.link = recipe.link
 
-        if self.tags.exists():
+        if self.tags.exists() and recipe.update_tags:
             self.tags.clear()
-            self._get_or_create_tag(recipe)
 
-        else:
-            self._get_or_create_tag(recipe)
+        if self.ingredients.exists() and recipe.update_ingredients:
+            self.ingredients.clear()
+
+        if recipe.update_tags:
+            self._get_or_create_instance(
+                fields=recipe.tags,
+                model=Tag,
+                relate_user=self.user,
+                relate_manager=self.tags,
+            )
+
+        if recipe.update_ingredients:
+            self._get_or_create_instance(
+                fields=recipe.ingredients,
+                model=Ingredient,
+                relate_user=self.user,
+                relate_manager=self.ingredients,
+            )
 
         self.save()
 
@@ -200,18 +220,18 @@ class Recipe(models.Model):
             user=recipe.user,
         )
 
-        for tag in recipe.tags:
-            tag_obj, _ = Tag.objects.get_or_create(
-                user=recipe.user,
-                **tag,
-            )
-            instance.tags.add(tag_obj)
-
-        for ingredient in recipe.ingredients:
-            ingredient_obj, _ = Ingredient.objects.get_or_create(
-                user=recipe.user, **ingredient
-            )
-            instance.ingredients.add(ingredient_obj)
+        self._get_or_create_instance(
+            fields=recipe.tags,
+            model=Tag,
+            relate_user=recipe.user,
+            relate_manager=instance.tags,
+        )
+        self._get_or_create_instance(
+            fields=recipe.ingredients,
+            model=Ingredient,
+            relate_user=recipe.user,
+            relate_manager=instance.ingredients,
+        )
 
         return instance
 

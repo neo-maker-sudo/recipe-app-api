@@ -79,7 +79,7 @@ def retrieve_recipe(
 
     try:
         recipe: domain_model.Recipe = repo.get(
-            {"id": id}, prefetch_model="tags"
+            {"id": id}, prefetch_model=["tags", "ingredients"]
         )
 
     except repo.model.DoesNotExist:
@@ -127,9 +127,17 @@ def update_recipe(
     user_id: int,
     repo: repository.AbstractRepository,
 ) -> domain_model.Recipe:
+    prefetch_model = []
+
+    if update_fields.get("tags", None) is not None:
+        prefetch_model.append("tags")
+
+    if update_fields.get("ingredients", None) is not None:
+        prefetch_model.append("ingredients")
+
     try:
         recipe: domain_model.Recipe = repo.get(
-            {"id": id}, select_related="user", prefetch_model="tags"
+            {"id": id}, select_related="user", prefetch_model=prefetch_model
         )
 
     except repo.model.DoesNotExist:
