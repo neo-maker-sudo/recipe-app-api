@@ -51,6 +51,7 @@ class User:
         self.methods = methods
         self._recipes = None
         self._tags = None
+        self._ingredients = None
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, User):
@@ -82,6 +83,10 @@ class User:
     def tags(self):
         return self._tags
 
+    @property
+    def ingredients(self):
+        return self._ingredients
+
 
 class RecipeNotExist(Exception):
     message = "食譜不存在"
@@ -102,7 +107,8 @@ class Recipe:
         time_minutes: int,
         price: float,
         link: str,
-        tags: Union[list[str], list["Tag"], None],
+        tags: Union[list["Tag"], None],
+        ingredients: Union[list["Ingredient"], None],
     ):
         self.id = None
         self.title = title
@@ -112,6 +118,9 @@ class Recipe:
         self.link = link
         self.user = None
         self.tags = tags if tags is not None else []
+        self.update_tags = False
+        self.ingredients = ingredients if ingredients is not None else []
+        self.update_ingredients = False
 
     def mark_user(self, user) -> None:
         self.user = user
@@ -129,6 +138,7 @@ class Recipe:
         price = update_fields.get("price", None)
         link = update_fields.get("link", None)
         tags = update_fields.get("tags", None)
+        ingredients = update_fields.get("ingredients", None)
 
         if self.title != title and title is not None:
             self.title = title
@@ -146,7 +156,15 @@ class Recipe:
             self.link = link
 
         if tags is not None:
-            self.tags = tags
+            self.update_tags = True
+            self.tags = [Tag(name=tag["name"]) for tag in tags]
+
+        if ingredients is not None:
+            self.update_ingredients = True
+            self.ingredients = [
+                Ingredient(name=ingredient["name"])
+                for ingredient in ingredients
+            ]
 
 
 class TagNotExist(Exception):
@@ -165,8 +183,65 @@ class Tag:
         self.name = name
         self.user = None
 
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Tag):
+            return False
+
+        return other.name == self.name
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+        }
+
     def check_ownership(self, user_id: int) -> bool:
         if self.user.id != user_id:
+            return False
+
+        return True
+
+    def update_detail(self, update_fields: dict) -> None:
+        name = update_fields.get("name", None)
+
+        if self.name != name and name is not None:
+            self.name = name
+
+
+class IngredientNotExist(Exception):
+    message = "原料不存在"
+    status_code = status.HTTP_400_BAD_REQUEST
+
+
+class IngredientNotOwnerError(Exception):
+    message = "不存在的原料"
+    status_code = status.HTTP_404_NOT_FOUND
+
+
+class Ingredient:
+    def __init__(self, name: str, id: Optional[int] = None):
+        self.id = id
+        self.name = name
+        self.user = None
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Ingredient):
+            return False
+
+        return other.name == self.name
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+        }
+
+    def check_ownership(self, user_id: int) -> bool:
+        if self.user is None or self.user.id != user_id:
             return False
 
         return True

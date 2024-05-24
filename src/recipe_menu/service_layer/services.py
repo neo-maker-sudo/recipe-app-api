@@ -79,7 +79,7 @@ def retrieve_recipe(
 
     try:
         recipe: domain_model.Recipe = repo.get(
-            {"id": id}, prefetch_model="tags"
+            {"id": id}, prefetch_model=["tags", "ingredients"]
         )
 
     except repo.model.DoesNotExist:
@@ -97,7 +97,8 @@ def create_recipe(
     user_id: int,
     repo: repository.AbstractRepository,
     tags: Optional[list[str]] = None,
-) -> None:
+    ingredients: Optional[list[str]] = None,
+) -> domain_model.Recipe:
     try:
         user = repository.UserRepository.model.objects.get(id=user_id)
 
@@ -110,10 +111,24 @@ def create_recipe(
         price=price,
         time_minutes=time_minutes,
         link=link,
-        tags=tags,
+        tags=(
+            [domain_model.Tag(name=tag["name"]) for tag in tags]
+            if tags is not None
+            else None
+        ),
+        ingredients=(
+            [
+                domain_model.Ingredient(name=ingredient["name"])
+                for ingredient in ingredients
+            ]
+            if ingredients is not None
+            else None
+        ),
     )
     recipe.mark_user(user)
     repo.add(recipe)
+
+    return recipe
 
 
 @transaction.atomic
@@ -123,9 +138,17 @@ def update_recipe(
     user_id: int,
     repo: repository.AbstractRepository,
 ) -> domain_model.Recipe:
+    prefetch_model = []
+
+    if update_fields.get("tags", None) is not None:
+        prefetch_model.append("tags")
+
+    if update_fields.get("ingredients", None) is not None:
+        prefetch_model.append("ingredients")
+
     try:
         recipe: domain_model.Recipe = repo.get(
-            {"id": id}, select_related="user", prefetch_model="tags"
+            {"id": id}, select_related="user", prefetch_model=prefetch_model
         )
 
     except repo.model.DoesNotExist:
@@ -209,4 +232,64 @@ def delete_tag(
         raise domain_model.TagNotOwnerError
 
     del tag
+    repo.delete()
+
+
+def retrieve_ingredients(
+    user_id: int, order_by: str, repo: repository.AbstractRepository
+):
+    try:
+        user: domain_model.User = repo.get(
+            {"id": user_id}, order_by=order_by, prefetch_model="ingredients"
+        )
+
+    except repo.model.DoesNotExist:
+        raise domain_model.UserNotExist
+
+    return user.ingredients
+
+
+@transaction.atomic
+def update_ingredient(
+    id: int,
+    update_fields: dict,
+    user_id: int,
+    repo: repository.AbstractRepository,
+):
+    try:
+        ingredient: domain_model.Ingredient = repo.get(
+            {"id": id}, select_related="user"
+        )
+
+    except repo.model.DoesNotExist:
+        raise domain_model.IngredientNotExist
+
+    if not ingredient.check_ownership(user_id):
+        raise domain_model.IngredientNotOwnerError
+
+    ingredient.update_detail(update_fields)
+
+    repo.update(ingredient)
+
+    return ingredient
+
+
+@transaction.atomic
+def delete_ingredient(
+    id: int,
+    user_id: int,
+    repo: repository.AbstractRepository,
+) -> None:
+    try:
+        ingredient: domain_model.Ingredient = repo.get(
+            {"id": id}, select_related="user"
+        )
+
+    except repo.model.DoesNotExist:
+        raise domain_model.IngredientNotExist
+
+    if not ingredient.check_ownership(user_id):
+        raise domain_model.IngredientNotOwnerError
+
+    del ingredient
     repo.delete()

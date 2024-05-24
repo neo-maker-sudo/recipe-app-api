@@ -107,6 +107,14 @@ class User(AbstractBaseUser, PermissionsMixin):
                 tag.to_domain() for tag in self.tags.all().order_by(order_by)
             ]
 
+        # if prefetch_model is ingredients:
+        # user retrieve all of ingredients being created.
+        if using_relate and prefetch_model == "ingredients":
+            user._ingredients = [
+                ingredient.to_domain()
+                for ingredient in self.ingredients.all().order_by(order_by)
+            ]
+
         return user
 
 
@@ -124,17 +132,28 @@ class Recipe(models.Model):
     )
 
     tags = models.ManyToManyField("Tag")
+    ingredients = models.ManyToManyField("Ingredient")
 
     def __str__(self) -> str:
         return self.title
 
-    def _get_or_create_tag(self, recipe: domain_model.Recipe) -> None:
-        for tag in recipe.tags:
-            tag_obj, _ = Tag.objects.get_or_create(
-                user=self.user,
-                **tag,
+    def _get_or_create_instance(
+        self,
+        domain_models: list[str],
+        model: Union["Tag", "Ingredient"],
+        relate_user,
+        relate_manager,
+    ) -> None:
+        # domain_models:
+        # is new value being insert into db, like: {"name": "tag1"}
+        # relate_manager:
+        # for add recipe relation instance (tag, ingredients)
+        for entry in domain_models:
+            obj, _ = model.objects.get_or_create(
+                user=relate_user, **entry.to_dict()
             )
-            self.tags.add(tag_obj)
+            entry.id = obj.id
+            relate_manager.add(obj)
 
     def update_from_domain(self, recipe: domain_model.Recipe) -> None:
         self.title = recipe.title
@@ -143,12 +162,27 @@ class Recipe(models.Model):
         self.price = recipe.price
         self.link = recipe.link
 
-        if self.tags.exists():
+        if self.tags.exists() and recipe.update_tags:
             self.tags.clear()
-            self._get_or_create_tag(recipe)
 
-        else:
-            self._get_or_create_tag(recipe)
+        if self.ingredients.exists() and recipe.update_ingredients:
+            self.ingredients.clear()
+
+        if recipe.update_tags:
+            self._get_or_create_instance(
+                domain_models=recipe.tags,
+                model=Tag,
+                relate_user=self.user,
+                relate_manager=self.tags,
+            )
+
+        if recipe.update_ingredients:
+            self._get_or_create_instance(
+                domain_models=recipe.ingredients,
+                model=Ingredient,
+                relate_user=self.user,
+                relate_manager=self.ingredients,
+            )
 
         self.save()
 
@@ -162,7 +196,15 @@ class Recipe(models.Model):
             tags=(
                 [tag.to_domain() for tag in self.tags.all()]
                 if self.tags.exists()
-                else []
+                else None
+            ),
+            ingredients=(
+                [
+                    ingredient.to_domain()
+                    for ingredient in self.ingredients.all()
+                ]
+                if self.ingredients.exists()
+                else None
             ),
         )
 
@@ -183,12 +225,18 @@ class Recipe(models.Model):
             user=recipe.user,
         )
 
-        for tag in recipe.tags:
-            tag_obj, _ = Tag.objects.get_or_create(
-                user=recipe.user,
-                **tag,
-            )
-            instance.tags.add(tag_obj)
+        self._get_or_create_instance(
+            domain_models=recipe.tags,
+            model=Tag,
+            relate_user=recipe.user,
+            relate_manager=instance.tags,
+        )
+        self._get_or_create_instance(
+            domain_models=recipe.ingredients,
+            model=Ingredient,
+            relate_user=recipe.user,
+            relate_manager=instance.ingredients,
+        )
 
         return instance
 
@@ -215,3 +263,25 @@ class Tag(models.Model):
         tag.user = self.user
 
         return tag
+
+
+class Ingredient(models.Model):
+    name = models.CharField(max_length=255)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="ingredients",
+    )
+
+    def __str__(self):
+        return self.name
+
+    def update_from_domain(self, ingredient: domain_model.Ingredient) -> None:
+        self.name = ingredient.name
+        self.save()
+
+    def to_domain(self):
+        ingredient = domain_model.Ingredient(id=self.id, name=self.name)
+        ingredient.user = self.user
+
+        return ingredient
