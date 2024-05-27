@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
@@ -82,3 +83,10 @@ class ModelTests(TestCase):
             user=user, name=ingredient_name
         )
         self.assertEqual(str(ingredient), ingredient_name)
+
+    def test_recipe_file_name_uuid(self):
+
+        uuid = "test-uuid"
+        file_path = f"{settings.RECIPE_MODEL_IMAGEFIELD_LOCATION}/{uuid}.jpg"
+
+        self.assertEqual(file_path, f"uploads/recipe/{uuid}.jpg")

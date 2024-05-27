@@ -125,6 +125,10 @@ class Recipe(models.Model):
     price = models.DecimalField(max_digits=5, decimal_places=2)
     link = models.CharField(max_length=255, blank=True)
 
+    image = models.ImageField(
+        upload_to=settings.RECIPE_MODEL_IMAGEFIELD_LOCATION, null=True
+    )
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -161,6 +165,7 @@ class Recipe(models.Model):
         self.time_minutes = recipe.time_minutes
         self.price = recipe.price
         self.link = recipe.link
+        self.image = recipe.image_object.image
 
         if self.tags.exists() and recipe.update_tags:
             self.tags.clear()
@@ -193,6 +198,7 @@ class Recipe(models.Model):
             time_minutes=self.time_minutes,
             price=self.price,
             link=self.link,
+            image_object=domain_model.RecipeImage(self.image),
             tags=(
                 [tag.to_domain() for tag in self.tags.all()]
                 if self.tags.exists()
@@ -213,9 +219,7 @@ class Recipe(models.Model):
 
         return recipe
 
-    def add_from_domain(
-        self, recipe: domain_model.Recipe
-    ) -> domain_model.Recipe:
+    def add_from_domain(self, recipe: domain_model.Recipe) -> "Recipe":
         instance = Recipe.objects.create(
             title=recipe.title,
             description=recipe.description,

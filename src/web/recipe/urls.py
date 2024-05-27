@@ -6,6 +6,11 @@ app_name = "recipe"
 urlpatterns = [
     path("recipes/", views.RecipeListAPIView.as_view(), name="recipe-list"),
     path(
+        "recipes/<int:recipe_id>/image/",
+        views.RecipeUploadImageAPIView.as_view(),
+        name="recipe-upload-image",
+    ),
+    path(
         "recipes/<int:recipe_id>/",
         views.RecipeDetailAPIView.as_view(),
         name="recipe-detail",

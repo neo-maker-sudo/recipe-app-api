@@ -1,5 +1,11 @@
+import os
+import uuid
 from dataclasses import dataclass
 from typing import Optional, Callable, Union
+
+from django.conf import settings
+from django.core.files.base import File
+from django.core.files.uploadedfile import TemporaryUploadedFile
 from rest_framework import status
 
 
@@ -98,6 +104,11 @@ class RecipeNotOwnerError(Exception):
     status_code = status.HTTP_404_NOT_FOUND
 
 
+@dataclass(frozen=True)
+class RecipeImage:
+    image: Union[TemporaryUploadedFile, File, None]
+
+
 class Recipe:
 
     def __init__(
@@ -109,6 +120,7 @@ class Recipe:
         link: str,
         tags: Union[list["Tag"], None],
         ingredients: Union[list["Ingredient"], None],
+        image_object: Optional[RecipeImage] = None,
     ):
         self.id = None
         self.title = title
@@ -116,6 +128,7 @@ class Recipe:
         self.time_minutes = time_minutes
         self.price = price
         self.link = link
+        self.image_object = image_object
         self.user = None
         self.tags = tags if tags is not None else []
         self.update_tags = False
@@ -165,6 +178,29 @@ class Recipe:
                 Ingredient(name=ingredient["name"])
                 for ingredient in ingredients
             ]
+
+    def update_image_object(self, image_object: RecipeImage):
+        _, ext = os.path.splitext(image_object.image.name)
+        image_object.image.name = f"{uuid.uuid4()}{ext}"
+        image_object.image.url = (
+            "{media_url}/{field_location}/{filename}".format(
+                media_url=settings.MEDIA_URL,
+                field_location=settings.RECIPE_MODEL_IMAGEFIELD_LOCATION,
+                filename=image_object.image.name,
+            )
+        )
+
+        self.image_object = image_object
+
+    @property
+    def image(self) -> Union[TemporaryUploadedFile, File, None]:
+        if self.image_object is None:
+            return None
+
+        elif self.image_object.image.name is None:
+            return None
+
+        return self.image_object.image
 
 
 class TagNotExist(Exception):
