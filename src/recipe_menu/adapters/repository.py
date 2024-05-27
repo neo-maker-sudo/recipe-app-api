@@ -3,6 +3,7 @@ from typing import Union, Optional
 from recipe_menu.domain import model as domain_model
 
 from django.db import IntegrityError
+from django.db.models import Prefetch
 from django.apps import apps as django_apps
 from django.contrib.auth import get_user_model
 
@@ -28,19 +29,21 @@ class UserRepository(AbstractRepository):
     def get(
         self,
         field: dict[str, Union[str, int]],
+        plan: Optional[list[Prefetch]] = None,
+        filter_obj: Optional[domain_model.UserFilterObj] = None,
         order_by: Optional[Union[str, list[str]]] = None,
-        prefetch_model: Optional[str] = None,
+        prefetching: bool = False,
     ) -> domain_model.User:
-        if prefetch_model is None:
+        if not prefetching:
             return self.model.objects.get(**field).to_domain()
 
         return (
-            self.model.objects.prefetch_related(prefetch_model)
+            self.model.objects.prefetch_related(*plan)
             .get(**field)
             .to_domain(
-                using_relate=True,
+                filter_obj=filter_obj,
                 order_by=order_by,
-                prefetch_model=prefetch_model,
+                prefetching=prefetching,
             )
         )
 

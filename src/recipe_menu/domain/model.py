@@ -1,9 +1,11 @@
 import os
 import uuid
 from dataclasses import dataclass
+from enum import Enum
 from typing import Optional, Callable, Union
 
 from django.conf import settings
+from django.db.models import Prefetch
 from django.core.files.base import File
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from rest_framework import status
@@ -12,6 +14,26 @@ from rest_framework import status
 def manage_profile(user, update_fields):
     user.manage_profile(update_fields)
     return update_fields
+
+
+def determine_prefetch_plan(
+    filter: "UserFilterObj", plan: Optional[list[Prefetch]] = None
+) -> list[Prefetch]:
+    if plan is None:
+        plan = []
+
+    if filter.model == UserFilterModel.RECIPES:
+        plan.append(Prefetch("recipes"))
+        plan.append(Prefetch("recipes__tags"))
+        plan.append(Prefetch("recipes__ingredients"))
+
+    elif filter.model == UserFilterModel.TAGS:
+        plan.append(Prefetch("recipes__tags"))
+
+    elif filter.model == UserFilterModel.INGREDIENTS:
+        plan.append(Prefetch("recipes__ingredients"))
+
+    return plan
 
 
 class UserAlreadyExist(Exception):
@@ -42,6 +64,26 @@ class UserTokenCredentials:
     token_type: str
 
 
+class UserFilterModel(str, Enum):
+    RECIPES = "recipes"
+    TAGS = "tags"
+    INGREDIENTS = "ingredients"
+
+
+@dataclass
+class UserFilterObj:
+    model: UserFilterModel
+    tags: Optional[str] = None
+    ingredients: Optional[str] = None
+
+    def __post_init__(self):
+        if self.tags is not None:
+            self.tags = [int(id) for id in self.tags.split(",")]
+
+        if self.ingredients is not None:
+            self.ingredients = [int(id) for id in self.ingredients.split(",")]
+
+
 class User:
     def __init__(
         self,
@@ -50,6 +92,7 @@ class User:
         methods: Optional[BaseUserMethods] = None,
         password: Optional[str] = None,
     ):
+        self.id = None
         self.email = email
         self.name = name
         self.password = password

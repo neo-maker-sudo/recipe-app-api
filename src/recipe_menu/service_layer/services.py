@@ -60,11 +60,21 @@ def update_user(
 
 
 def retrieve_recipes(
-    user_id: int, order_by: str, repo: repository.AbstractRepository
+    user_id: int,
+    filter_obj: domain_model.UserFilterObj,
+    order_by: str,
+    repo: repository.AbstractRepository,
 ) -> set:
+
+    plan = domain_model.determine_prefetch_plan(filter_obj)
+
     try:
         user: domain_model.User = repo.get(
-            {"id": user_id}, order_by=order_by, prefetch_model="recipes__tags"
+            {"id": user_id},
+            plan=plan,
+            filter_obj=filter_obj,
+            order_by=order_by,
+            prefetching=True,
         )
 
     except repo.model.DoesNotExist:
@@ -204,11 +214,20 @@ def delete_recipe(
 
 
 def retrieve_tags(
-    user_id: int, order_by: str, repo: repository.AbstractRepository
+    user_id: int,
+    filter_obj: domain_model.UserFilterObj,
+    order_by: str,
+    repo: repository.AbstractRepository,
 ):
+    plan = domain_model.determine_prefetch_plan(filter_obj)
+
     try:
         user: domain_model.User = repo.get(
-            {"id": user_id}, order_by=order_by, prefetch_model="tags"
+            {"id": user_id},
+            plan=plan,
+            filter_obj=filter_obj,
+            order_by=order_by,
+            prefetching=True,
         )
 
     except repo.model.DoesNotExist:
@@ -260,11 +279,20 @@ def delete_tag(
 
 
 def retrieve_ingredients(
-    user_id: int, order_by: str, repo: repository.AbstractRepository
+    user_id: int,
+    filter_obj: domain_model.UserFilterObj,
+    order_by: str,
+    repo: repository.AbstractRepository,
 ):
+    plan = domain_model.determine_prefetch_plan(filter_obj)
+
     try:
         user: domain_model.User = repo.get(
-            {"id": user_id}, order_by=order_by, prefetch_model="ingredients"
+            {"id": user_id},
+            plan=plan,
+            filter_obj=filter_obj,
+            order_by=order_by,
+            prefetching=True,
         )
 
     except repo.model.DoesNotExist:

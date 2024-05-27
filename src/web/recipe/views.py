@@ -1,4 +1,8 @@
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import (
+    extend_schema,
+    OpenApiParameter,
+    OpenApiTypes,
+)
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -40,6 +44,18 @@ class RecipeListAPIView(APIView):
             401: "",
         },
         methods=["GET"],
+        parameters=[
+            OpenApiParameter(
+                "tags",
+                OpenApiTypes.STR,
+                description="Comma separated list of tag IDs to filter",
+            ),
+            OpenApiParameter(
+                "ingredients",
+                OpenApiTypes.STR,
+                description="Comma separated list of ingredient IDs to filter",
+            ),
+        ],
     )
     def get(self, request, *args, **kwargs):
         order_by = request.query_params.get("o", "-id")
@@ -47,6 +63,11 @@ class RecipeListAPIView(APIView):
         try:
             recipes = services.retrieve_recipes(
                 user_id=request.user.id,
+                filter_obj=domain_model.UserFilterObj(
+                    model=domain_model.UserFilterModel.RECIPES,
+                    tags=request.query_params.get("tags", None),
+                    ingredients=request.query_params.get("ingredients", None),
+                ),
                 order_by=order_by,
                 repo=repository.UserRepository(),
             )
@@ -265,6 +286,10 @@ class TagsListAPIView(APIView):
         try:
             tags = services.retrieve_tags(
                 user_id=request.user.id,
+                filter_obj=domain_model.UserFilterObj(
+                    model=domain_model.UserFilterModel.TAGS,
+                    tags=request.query_params.get("tags", None),
+                ),
                 order_by=order_by,
                 repo=repository.UserRepository(),
             )
@@ -364,6 +389,10 @@ class IngredientListAPIView(APIView):
         try:
             ingredients = services.retrieve_ingredients(
                 user_id=request.user.id,
+                filter_obj=domain_model.UserFilterObj(
+                    model=domain_model.UserFilterModel.INGREDIENTS,
+                    ingredients=request.query_params.get("ingredients", None),
+                ),
                 order_by=order_by,
                 repo=repository.UserRepository(),
             )
