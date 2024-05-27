@@ -72,9 +72,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def to_domain(
         self,
-        using_relate: bool = False,
+        prefetching: bool = False,
+        filter_obj: Optional[
+            Union[domain_model.UserFilterObj, domain_model.UserAssignedObj]
+        ] = None,
         order_by: Optional[Union[str, list[str]]] = None,
-        prefetch_model: Optional[str] = None,
     ) -> domain_model.User:
         methods = domain_model.BaseUserMethods(
             check_password=self.check_password,
@@ -90,32 +92,84 @@ class User(AbstractBaseUser, PermissionsMixin):
         )
         user.id = self.id
 
-        # if prefetch_model is recipes__tags:
-        # user list recipe and recipe need to list its mark tags
-        # so relation will be:
-        # User -> Recipe (one to many), Recipe -> Tag (many to many)
-        if using_relate and prefetch_model == "recipes__tags":
+        if not prefetching:
+            return user
+
+        if filter_obj.model == domain_model.UserFilterModel.RECIPES:
             user._recipes = [
                 recipe.to_domain()
-                for recipe in self.recipes.all().order_by(order_by)
+                for recipe in self.recipes.filter(
+                    self._recipes_queryset(
+                        tags=filter_obj.tags,
+                        ingredients=filter_obj.ingredients,
+                    )
+                ).order_by(order_by)
             ]
 
-        # if prefetch_model is tags:
-        # user retrieve all of tags being created.
-        if using_relate and prefetch_model == "tags":
+        elif filter_obj.model == domain_model.UserFilterModel.TAGS:
             user._tags = [
-                tag.to_domain() for tag in self.tags.all().order_by(order_by)
+                tag.to_domain()
+                for tag in self.tags.filter(
+                    self._tags_queryset(
+                        filter_obj.tags, filter_obj.assigned_only
+                    )
+                )
+                .order_by(order_by)
+                .distinct()
             ]
 
-        # if prefetch_model is ingredients:
-        # user retrieve all of ingredients being created.
-        if using_relate and prefetch_model == "ingredients":
+        elif filter_obj.model == domain_model.UserFilterModel.INGREDIENTS:
             user._ingredients = [
                 ingredient.to_domain()
-                for ingredient in self.ingredients.all().order_by(order_by)
+                for ingredient in self.ingredients.filter(
+                    self._ingredients_queryset(
+                        filter_obj.ingredients, filter_obj.assigned_only
+                    )
+                )
+                .order_by(order_by)
+                .distinct()
             ]
 
         return user
+
+    def _recipes_queryset(
+        self, tags: Union[list[str], None], ingredients: Union[list[str], None]
+    ):
+        q = models.Q()
+
+        if tags is not None:
+            q |= models.Q(tags__id__in=tags)
+
+        if ingredients is not None:
+            q |= models.Q(ingredients__id__in=ingredients)
+
+        return q
+
+    def _tags_queryset(
+        self, tags: Union[list[str], None], assigned_only: bool
+    ):
+        q = models.Q()
+
+        if tags is not None:
+            q |= models.Q(tags__id__in=tags)
+
+        if assigned_only:
+            q |= models.Q(recipe__isnull=False)
+
+        return q
+
+    def _ingredients_queryset(
+        self, ingredients: Union[list[str], None], assigned_only: bool
+    ):
+        q = models.Q()
+
+        if ingredients is not None:
+            q |= models.Q(ingredients__id__in=ingredients)
+
+        if assigned_only:
+            q |= models.Q(recipe__isnull=False)
+
+        return q
 
 
 class Recipe(models.Model):

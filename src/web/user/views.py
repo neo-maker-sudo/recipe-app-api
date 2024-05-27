@@ -2,6 +2,10 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import (
+    JWTStatelessUserAuthentication,
+)
 
 from .serializers import (
     UserSerializerIn,
@@ -18,6 +22,8 @@ from recipe_menu.domain import model as domain_model
 
 
 class RegisterAPIView(APIView):
+
+    authentication_classes = []
 
     @extend_schema(
         request=UserSerializerIn,
@@ -48,6 +54,8 @@ class RegisterAPIView(APIView):
 
 
 class LoginAPIView(APIView):
+
+    authentication_classes = []
 
     @extend_schema(
         request=LoginSerializerIn,
@@ -81,6 +89,9 @@ class LoginAPIView(APIView):
 
 class ManageUserAPIView(APIView):
 
+    authentication_classes = [JWTStatelessUserAuthentication]
+    permission_classes = [IsAuthenticated]
+
     @extend_schema(
         request=ManageUserGetSerializerIn,
         responses={
@@ -97,7 +108,7 @@ class ManageUserAPIView(APIView):
 
         try:
             user = services.retrieve_user(
-                id=serializer.validated_data.get("user_id"),
+                id=request.user.id,
                 repo=repository.UserRepository(),
             )
 
@@ -117,13 +128,11 @@ class ManageUserAPIView(APIView):
         methods=["PATCH"],
     )
     def patch(self, request, *args, **kwargs):
-        serializer = ManageUserPatchSerializerIn(
-            data=request.data, context={"request": request}
-        )
+        serializer = ManageUserPatchSerializerIn(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         services.update_user(
-            id=serializer.validated_data.get("user_id"),
+            id=request.user.id,
             update_fields={
                 "name": serializer.validated_data.get("name"),
                 "password": serializer.validated_data.get("password"),
