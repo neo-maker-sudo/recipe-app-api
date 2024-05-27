@@ -279,6 +279,14 @@ class TagsListAPIView(APIView):
             401: "",
         },
         methods=["GET"],
+        parameters=[
+            OpenApiParameter(
+                "assigned_only",
+                OpenApiTypes.INT,
+                enum=[0, 1],
+                description="give 0 or 1 to filter tags being assigned",
+            ),
+        ],
     )
     def get(self, request, *args, **kwargs):
         order_by = request.query_params.get("o", "-name")
@@ -286,9 +294,12 @@ class TagsListAPIView(APIView):
         try:
             tags = services.retrieve_tags(
                 user_id=request.user.id,
-                filter_obj=domain_model.UserFilterObj(
+                filter_obj=domain_model.UserAssignedObj(
                     model=domain_model.UserFilterModel.TAGS,
                     tags=request.query_params.get("tags", None),
+                    assigned_only=bool(
+                        int(request.query_params.get("assigned_only", 0))
+                    ),
                 ),
                 order_by=order_by,
                 repo=repository.UserRepository(),
@@ -382,6 +393,14 @@ class IngredientListAPIView(APIView):
             401: "",
         },
         methods=["GET"],
+        parameters=[
+            OpenApiParameter(
+                "assigned_only",
+                OpenApiTypes.INT,
+                enum=[0, 1],
+                description="give 0 or 1 to filter ingredients being assigned",
+            ),
+        ],
     )
     def get(self, request, *args, **kwargs):
         order_by = request.query_params.get("o", "-name")
@@ -389,9 +408,12 @@ class IngredientListAPIView(APIView):
         try:
             ingredients = services.retrieve_ingredients(
                 user_id=request.user.id,
-                filter_obj=domain_model.UserFilterObj(
+                filter_obj=domain_model.UserAssignedObj(
                     model=domain_model.UserFilterModel.INGREDIENTS,
                     ingredients=request.query_params.get("ingredients", None),
+                    assigned_only=bool(
+                        int(request.query_params.get("assigned_only", 0))
+                    ),
                 ),
                 order_by=order_by,
                 repo=repository.UserRepository(),

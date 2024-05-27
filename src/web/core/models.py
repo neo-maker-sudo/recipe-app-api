@@ -73,7 +73,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     def to_domain(
         self,
         prefetching: bool = False,
-        filter_obj: Optional[domain_model.UserFilterObj] = None,
+        filter_obj: Optional[
+            Union[domain_model.UserFilterObj, domain_model.UserAssignedObj]
+        ] = None,
         order_by: Optional[Union[str, list[str]]] = None,
     ) -> domain_model.User:
         methods = domain_model.BaseUserMethods(
@@ -108,16 +110,24 @@ class User(AbstractBaseUser, PermissionsMixin):
             user._tags = [
                 tag.to_domain()
                 for tag in self.tags.filter(
-                    self._tags_queryset(filter_obj.tags)
-                ).order_by(order_by)
+                    self._tags_queryset(
+                        filter_obj.tags, filter_obj.assigned_only
+                    )
+                )
+                .order_by(order_by)
+                .distinct()
             ]
 
         elif filter_obj.model == domain_model.UserFilterModel.INGREDIENTS:
             user._ingredients = [
                 ingredient.to_domain()
                 for ingredient in self.ingredients.filter(
-                    self._ingredients_queryset(filter_obj.ingredients)
-                ).order_by(order_by)
+                    self._ingredients_queryset(
+                        filter_obj.ingredients, filter_obj.assigned_only
+                    )
+                )
+                .order_by(order_by)
+                .distinct()
             ]
 
         return user
@@ -135,19 +145,29 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         return q
 
-    def _tags_queryset(self, tags: Union[list[str], None]):
+    def _tags_queryset(
+        self, tags: Union[list[str], None], assigned_only: bool
+    ):
         q = models.Q()
 
         if tags is not None:
             q |= models.Q(tags__id__in=tags)
 
+        if assigned_only:
+            q |= models.Q(recipe__isnull=False)
+
         return q
 
-    def _ingredients_queryset(self, ingredients: Union[list[str], None]):
+    def _ingredients_queryset(
+        self, ingredients: Union[list[str], None], assigned_only: bool
+    ):
         q = models.Q()
 
         if ingredients is not None:
             q |= models.Q(ingredients__id__in=ingredients)
+
+        if assigned_only:
+            q |= models.Q(recipe__isnull=False)
 
         return q
 

@@ -84,6 +84,21 @@ class UserFilterObj:
             self.ingredients = [int(id) for id in self.ingredients.split(",")]
 
 
+@dataclass
+class UserAssignedObj:
+    model: UserFilterModel
+    assigned_only: bool
+    tags: Optional[str] = None
+    ingredients: Optional[str] = None
+
+    def __post_init__(self):
+        if self.tags is not None:
+            self.tags = [int(id) for id in self.tags.split(",")]
+
+        if self.ingredients is not None:
+            self.ingredients = [int(id) for id in self.ingredients.split(",")]
+
+
 class User:
     def __init__(
         self,
