@@ -66,16 +66,3 @@ class ManageUserPatchSerializerIn(serializers.Serializer):
         min_length=5,
         required=False,
     )
-
-    def validate(self, attrs):
-        request = self.context.get("request")
-
-        jwt_authenticator = JWTStatelessUserAuthentication()
-        result = jwt_authenticator.authenticate(request)
-
-        if result is None:
-            raise InvalidToken(_(self.invalid_token_msg))
-
-        token_user, payload = result
-        attrs["user_id"] = payload["user_id"]
-        return attrs
