@@ -100,7 +100,9 @@ class PrivateRecipeAPITests(TestCase):
             for recipe in Recipe.objects.all().order_by(order_by)
         ]
 
-        data = RecipeListSerializerOut(recipes, many=True).data
+        data = RecipeListSerializerOut(
+            recipes, many=True, context={"request": res.wsgi_request}
+        ).data
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, data)
 
@@ -117,7 +119,10 @@ class PrivateRecipeAPITests(TestCase):
         recipes = Recipe.objects.filter(user=self.user).order_by(order_by)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(
-            res.data, RecipeListSerializerOut(recipes, many=True).data
+            res.data,
+            RecipeListSerializerOut(
+                recipes, many=True, context={"request": res.wsgi_request}
+            ).data,
         )
 
     def test_retrieve_recipe_detail(self):
@@ -127,7 +132,12 @@ class PrivateRecipeAPITests(TestCase):
 
         res = self.client.get(url, **self.headers)
 
-        self.assertEqual(res.data, RecipeDetailSerializerOut(recipe).data)
+        self.assertEqual(
+            res.data,
+            RecipeDetailSerializerOut(
+                recipe, context={"request": res.wsgi_request}
+            ).data,
+        )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
     def test_create_recipe(self):

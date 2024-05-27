@@ -165,6 +165,30 @@ def update_recipe(
 
 
 @transaction.atomic
+def update_recipe_image(
+    id: int,
+    image_object: domain_model.RecipeImage,
+    user_id: int,
+    repo: repository.AbstractRepository,
+) -> domain_model.Recipe:
+    try:
+        recipe: domain_model.Recipe = repo.get(
+            {"id": id}, select_related="user"
+        )
+
+    except repo.model.DoesNotExist:
+        raise domain_model.RecipeNotExist
+
+    if not recipe.check_ownership(user_id):
+        raise domain_model.RecipeNotOwnerError
+
+    recipe.update_image_object(image_object)
+    repo.update(recipe)
+
+    return recipe
+
+
+@transaction.atomic
 def delete_recipe(
     id: int,
     user_id: int,

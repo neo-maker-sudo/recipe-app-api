@@ -2,6 +2,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import (
     JWTStatelessUserAuthentication,
@@ -14,6 +15,9 @@ from recipe.serializers import (
     RecipeDetailSerializerOut,
     RecipeCreateSerializerIn,
     RecipeDetailPatchSerializerIn,
+    RecipeDetailPatchSerializerOut,
+    RecipeUploadImageSerializerIn,
+    RecipeUploadImageSerializerOut,
     TagListSerializerOut,
     TagDetailPatchSerializerIn,
     TagDetailPatchSerializerOut,
@@ -51,7 +55,9 @@ class RecipeListAPIView(APIView):
             return Response({"detail": exc.message}, status=exc.status_code)
 
         return Response(
-            RecipeListSerializerOut(recipes, many=True).data,
+            RecipeListSerializerOut(
+                recipes, many=True, context={"request": request}
+            ).data,
             status=status.HTTP_200_OK,
         )
 
@@ -93,6 +99,7 @@ class RecipeDetailAPIView(APIView):
         request="",
         responses={
             200: RecipeDetailSerializerOut,
+            400: domain_model.RecipeNotExist,
             401: "",
         },
         methods=["GET"],
@@ -110,14 +117,16 @@ class RecipeDetailAPIView(APIView):
             return Response({"detail": exc.message}, status=exc.status_code)
 
         return Response(
-            RecipeDetailSerializerOut(recipe).data,
+            RecipeDetailSerializerOut(
+                recipe, context={"request": request}
+            ).data,
             status=status.HTTP_200_OK,
         )
 
     @extend_schema(
         request=RecipeDetailPatchSerializerIn,
         responses={
-            200: RecipeDetailSerializerOut,
+            200: RecipeDetailPatchSerializerOut,
             400: domain_model.RecipeNotExist,
             401: "",
             404: domain_model.RecipeNotOwnerError,
@@ -159,14 +168,14 @@ class RecipeDetailAPIView(APIView):
             return Response({"detail": exc.message}, status=exc.status_code)
 
         return Response(
-            RecipeDetailSerializerOut(recipe).data,
+            RecipeDetailPatchSerializerOut(recipe).data,
             status=status.HTTP_200_OK,
         )
 
     @extend_schema(
         request="",
         responses={
-            204: RecipeDetailSerializerOut,
+            204: "OK",
             400: domain_model.RecipeNotExist,
             401: "",
             404: domain_model.RecipeNotOwnerError,
@@ -190,6 +199,51 @@ class RecipeDetailAPIView(APIView):
             return Response({"detail": exc.message}, status=exc.status_code)
 
         return Response("OK", status=status.HTTP_204_NO_CONTENT)
+
+
+class RecipeUploadImageAPIView(APIView):
+    authentication_classes = [JWTStatelessUserAuthentication]
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser]
+
+    @extend_schema(
+        request=RecipeUploadImageSerializerIn,
+        responses={
+            200: RecipeUploadImageSerializerOut,
+            400: domain_model.RecipeNotExist,
+            401: "",
+            404: domain_model.RecipeNotOwnerError,
+        },
+        methods=["PATCH"],
+    )
+    def patch(self, request, *args, **kwargs):
+        id = kwargs.get("recipe_id", None)
+
+        serializer = RecipeUploadImageSerializerIn(data=request.FILES)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            recipe = services.update_recipe_image(
+                id=id,
+                image_object=domain_model.RecipeImage(
+                    image=serializer.validated_data.get("image")
+                ),
+                user_id=request.user.id,
+                repo=repository.RecipeRepository(),
+            )
+
+        except (
+            domain_model.RecipeNotExist,
+            domain_model.RecipeNotOwnerError,
+        ) as exc:
+            return Response({"detail": exc.message}, status=exc.status_code)
+
+        return Response(
+            RecipeUploadImageSerializerOut(
+                recipe, context={"request": request}
+            ).data,
+            status=status.HTTP_200_OK,
+        )
 
 
 class TagsListAPIView(APIView):

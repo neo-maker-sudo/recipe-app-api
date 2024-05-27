@@ -25,14 +25,23 @@ class RecipeListSerializerOut(serializers.Serializer):
     time_minutes = serializers.IntegerField()
     price = serializers.DecimalField(max_digits=5, decimal_places=2)
     link = serializers.CharField()
+    image = serializers.SerializerMethodField("get_image_url", required=False)
     tags = RecipeTagsSerailizerOut(many=True, required=False)
     ingredients = RecipeIngredientsSerializerOut(many=True, required=False)
+
+    def get_image_url(self, model):
+        if model.image is None:
+            return None
+
+        try:
+            return self.context["request"].build_absolute_uri(model.image.url)
+
+        except ValueError:
+            pass
 
 
 class RecipeDetailSerializerOut(RecipeListSerializerOut):
     description = serializers.CharField()
-    tags = RecipeTagsSerailizerOut(many=True, required=False)
-    ingredients = RecipeIngredientsSerializerOut(many=True, required=False)
 
 
 class RecipeCreateSerializerIn(serializers.Serializer):
@@ -63,6 +72,31 @@ class RecipeDetailPatchSerializerIn(serializers.Serializer):
     link = serializers.CharField(allow_blank=True, required=False)
     tags = RecipeTagsSerailizerIn(many=True, required=False)
     ingredients = RecipeIngredientsSerializerIn(many=True, required=False)
+
+
+class RecipeDetailPatchSerializerOut(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    time_minutes = serializers.IntegerField()
+    price = serializers.DecimalField(max_digits=5, decimal_places=2)
+    link = serializers.CharField()
+    tags = RecipeTagsSerailizerOut(many=True, required=False)
+    ingredients = RecipeIngredientsSerializerOut(many=True, required=False)
+
+
+class RecipeUploadImageSerializerIn(serializers.Serializer):
+    image = serializers.ImageField(required=True)
+
+
+class RecipeUploadImageSerializerOut(serializers.Serializer):
+    id = serializers.IntegerField(required=True)
+    image = serializers.SerializerMethodField("get_image_url")
+
+    def get_image_url(self, model):
+        if model.image.name is None:
+            return None
+
+        return self.context["request"].build_absolute_uri(model.image.url)
 
 
 class TagListSerializerOut(serializers.Serializer):
