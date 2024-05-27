@@ -376,6 +376,66 @@ class PrivateRecipeAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(recipe.ingredients.count(), 0)
 
+    def test_filter_by_tags(self):
+        r1 = create_recipe(self.user, title="recipe 1")
+        r2 = create_recipe(self.user, title="recipe 2")
+
+        t1 = Tag.objects.create(user=self.user, name="tag1")
+        t2 = Tag.objects.create(user=self.user, name="tag2")
+
+        r1.tags.add(t1)
+        r2.tags.add(t2)
+
+        r3 = create_recipe(self.user, title="recipe 3")
+
+        params = {"tags": f"{t1.id},{t2.id}"}
+        res = self.client.get(RECIPES_URL, params, **self.headers)
+
+        s1 = RecipeDetailSerializerOut(
+            r1, context={"request": res.wsgi_request}
+        )
+        s2 = RecipeDetailSerializerOut(
+            r2, context={"request": res.wsgi_request}
+        )
+        s3 = RecipeDetailSerializerOut(
+            r3, context={"request": res.wsgi_request}
+        )
+
+        data = [data["tags"][0] for data in res.data]
+        self.assertIn(s1.data["tags"][0], data)
+        self.assertIn(s2.data["tags"][0], data)
+        self.assertNotIn(s3.data["tags"], data)
+
+    def test_filter_by_ingredients(self):
+        r1 = create_recipe(self.user, title="recipe 1")
+        r2 = create_recipe(self.user, title="recipe 2")
+
+        i1 = Ingredient.objects.create(user=self.user, name="ingre1")
+        i2 = Ingredient.objects.create(user=self.user, name="ingre2")
+
+        r1.ingredients.add(i1)
+        r2.ingredients.add(i2)
+        r3 = create_recipe(self.user, title="recipe 3")
+
+        params = {"ingredients": f"{i1.id},{i2.id}"}
+        res = self.client.get(RECIPES_URL, params, **self.headers)
+
+        s1 = RecipeDetailSerializerOut(
+            r1, context={"request": res.wsgi_request}
+        )
+
+        s2 = RecipeDetailSerializerOut(
+            r2, context={"request": res.wsgi_request}
+        )
+        s3 = RecipeDetailSerializerOut(
+            r3, context={"request": res.wsgi_request}
+        )
+
+        data = [data["ingredients"][0] for data in res.data]
+        self.assertIn(s1.data["ingredients"][0], data)
+        self.assertIn(s2.data["ingredients"][0], data)
+        self.assertNotIn(s3.data["ingredients"], data)
+
 
 class ImageUploadTests(TestCase):
     def setUp(self):
